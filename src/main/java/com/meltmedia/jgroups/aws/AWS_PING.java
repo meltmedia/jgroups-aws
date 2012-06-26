@@ -24,6 +24,7 @@ import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.Tag;
 
 /**
  * 
@@ -132,7 +133,25 @@ public class AWS_PING
 		return awsFilters;
 	}
 
-
+	public static Collection<Tag> getInstanceTags(AmazonEC2 ec2, String instanceId) {
+	  DescribeInstancesRequest request = new DescribeInstancesRequest();
+	  List<String> ids = new ArrayList<String>();
+	  ids.add(instanceId);
+	  request.setInstanceIds(ids);
+	  DescribeInstancesResult response = ec2.describeInstances(request);
+	  List<Tag> tags = new ArrayList<Tag>();
+	  List<Reservation> reservations = response.getReservations();
+	  for(Reservation res : reservations) {
+	    List<Instance> insts = res.getInstances();
+	    for(Instance inst : insts) {
+	      List<Tag> instanceTags = inst.getTags();
+	      if(instanceTags != null && instanceTags.size() > 0) {
+	        tags.addAll(instanceTags);
+	      }
+	    }
+	  }
+	  return tags;
+	}
 
 
 }

@@ -14,7 +14,6 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <dependencyManagement>
     <dependencies>
     <dependency>
       <groupId>jgroups</groupId>
@@ -44,7 +43,6 @@
       <scope>test</scope>
     </dependency>
     </dependencies>
-  </dependencyManagement>
 
   <name>JGroups AWS Discovery</name>
   <url>https://github.com/meltmedia/jgroups-aws</url>

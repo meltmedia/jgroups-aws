@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
 import org.jgroups.protocols.Discovery;
 import org.jgroups.util.Promise;
@@ -23,23 +26,16 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
 
 /**
+ * 
+ * References
  * http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeInstances.html
+ * http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
  * @author ctrimble
  *
  */
 public class AWS_PING
   extends Discovery
 {
-	/**
-	private static Pattern filterPattern;
-	static {
-		try {
-			filterPattern.compile("\\w*--filter\\w+([^=\\w\"\']\\w+=\\w+)");
-		}
-		catch(PatternSystaxException pse ) {
-			pse.printStackTrace();
-		}
-	}*/
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;
 	@Property(description="The AWS Secret Key for the account to search.")
@@ -48,14 +44,19 @@ public class AWS_PING
 	protected String endpoint;
 	@Property(description="A semicolon delimited list of filters to search on. (name1=value1,value2;name2=value1,value2)")
 	protected String filters;
+	
+	private String instanceId;
+	private String localAddress;
 	private Collection<Filter> awsFilters;
 	private AmazonEC2 ec2;
 	
 	public void init() throws Exception {
 		super.init();
 		
-		awsFilters = parseFilters(filters);
+		// get the instance id and private IP address.
+		HttpClient client = new DefaultHttpClient();
 		
+		awsFilters = parseFilters(filters);
 		ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
 		
 	}
@@ -68,10 +69,8 @@ public class AWS_PING
         super.stop();
     }
 	
-
 	@Override
-	public void sendGetMembersRequest(String arg0, Promise arg1, ViewId arg2)
-			throws Exception {
+	public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
 		
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
 		request.setFilters(awsFilters);
@@ -87,16 +86,21 @@ public class AWS_PING
 			}
 		}
 		
-		// send GET_MBRS_REQ messages down for all the private IPs.
 		for( String privateIpAddress : privateIpAddresses ) {
-			// TODO: create the message and call down in timer.execute()
 		}
+		
+		return null;
 		
 	}
 
 
 	@Override
 	public boolean isDynamic() {
+		return true;
+	}
+	
+	@Override
+	public boolean sendDiscoveryRequestsInParallel() {
 		return true;
 	}
 	
@@ -127,5 +131,8 @@ public class AWS_PING
 		}
 		return awsFilters;
 	}
+
+
+
 
 }

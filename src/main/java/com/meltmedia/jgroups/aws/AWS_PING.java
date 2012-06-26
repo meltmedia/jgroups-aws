@@ -1,13 +1,19 @@
 package com.meltmedia.jgroups.aws;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
 import org.jgroups.protocols.Discovery;
@@ -36,6 +42,10 @@ import com.amazonaws.services.ec2.model.Reservation;
 public class AWS_PING
   extends Discovery
 {
+	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
+	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
+	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4s";
+	
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;
 	@Property(description="The AWS Secret Key for the account to search.")
@@ -54,7 +64,15 @@ public class AWS_PING
 		super.init();
 		
 		// get the instance id and private IP address.
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = null;
+		try {
+			client = new DefaultHttpClient();
+			instanceId = getUrl(client, INSTANCE_METADATA_BASE_URI);
+			localAddress = getUrl(client, INSTANCE_METADATA_BASE_URI);
+		}
+		finally {
+			HttpClientUtils.closeQuietly(client);
+		}
 		
 		awsFilters = parseFilters(filters);
 		ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
@@ -130,6 +148,18 @@ public class AWS_PING
 			awsFilters.add(new Filter().withName(keyValues[0]).withValues(keyValues[1].split("\\w*,\\w")));
 		}
 		return awsFilters;
+	}
+	
+	static String getUrl( HttpClient client, String uri )
+	  throws Exception
+	{
+	    HttpGet getInstance = new HttpGet();
+	    getInstance.setURI(new URI(uri));
+	    HttpResponse response = client.execute(getInstance);
+	    if( response.getStatusLine().getStatusCode() != HttpStatus.SC_OK ) {
+	    	throw new Exception("Could not get instance ID.");
+	    }
+	    return EntityUtils.toString(response.getEntity());
 	}
 
 

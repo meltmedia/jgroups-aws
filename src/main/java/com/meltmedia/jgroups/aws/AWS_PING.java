@@ -1,6 +1,7 @@
 package com.meltmedia.jgroups.aws;
 
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import org.apache.http.util.EntityUtils;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
 import org.jgroups.protocols.Discovery;
+import org.jgroups.stack.IpAddress;
 import org.jgroups.util.Promise;
 import org.jgroups.annotations.Property;
 
@@ -47,6 +49,8 @@ public class AWS_PING
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
 	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4s";
 	
+	@Property(description="The port to communicate on.")
+	protected String port;
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;
 	@Property(description="The AWS Secret Key for the account to search.")
@@ -55,14 +59,20 @@ public class AWS_PING
 	protected String endpoint;
 	@Property(description="A semicolon delimited list of filters to search on. (name1=value1,value2;name2=value1,value2)")
 	protected String filters;
+	@Property(description="A list of tags that identify this cluster.")
+	protected String tag_names;
 	
 	private String instanceId;
 	private String localAddress;
+	private int portNumber;
 	private Collection<Filter> awsFilters;
+	private List<String> awsTagNames;
 	private AmazonEC2 ec2;
 	
 	public void init() throws Exception {
 		super.init();
+		
+		portNumber = Integer.parseInt(port);
 		
 		// get the instance id and private IP address.
 		HttpClient client = null;
@@ -75,7 +85,11 @@ public class AWS_PING
 			HttpClientUtils.closeQuietly(client);
 		}
 		
-		awsFilters = parseFilters(filters);
+		if( filters != null )
+    		awsFilters = parseFilters(filters);
+		if( tag_names != null ) 
+			awsTagNames = parseTagNames(tag_names);
+		
 		ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
 		
 	}
@@ -90,26 +104,40 @@ public class AWS_PING
 	
 	@Override
 	public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
+		List<PhysicalAddress> result = new ArrayList<PhysicalAddress>();
 		
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
-		request.setFilters(awsFilters);
+		List<Filter> filters = new ArrayList<Filter>();
 		
-		DescribeInstancesResult result = ec2.describeInstances(request);
+		// if there are aws tags defined, then look them up and create filters.
+		if( awsTagNames != null ) {
+			Collection<Tag> instanceTags = getInstanceTags(ec2, instanceId);
+			for( Tag instanceTag : instanceTags ) {
+				if( awsTagNames.contains(instanceTag.getKey())) {
+					filters.add(new Filter().withName("tag:"+instanceTag.getKey()).withValues(instanceTag.getValue()));
+				}
+			}
+			
+		}
+		
+		// if there are aws filters defined, then add them to the list.
+		if( awsFilters != null ) {
+			filters.addAll(awsFilters);
+		}
 		
 		// NOTE: the reservations group nodes together by when they were started.  We need to dig through all of the reservations.
-		List<String> privateIpAddresses = new ArrayList<String>();
-		for( Reservation reservation : result.getReservations() ) {
+		DescribeInstancesResult filterResult = ec2.describeInstances(new DescribeInstancesRequest().withFilters(filters));
+		for( Reservation reservation : filterResult.getReservations() ) {
 			for( Instance instance : reservation.getInstances() ) {
-				// TODO: Filter out the ip of this machine.
-		        privateIpAddresses.add(instance.getPrivateIpAddress());
+					try {
+						result.add(new IpAddress(instance.getPrivateIpAddress(), portNumber));
+					} catch (UnknownHostException e) {
+						log.warn("Could not build IpAddress for "+instance.getImageId());
+					}
 			}
 		}
 		
-		for( String privateIpAddress : privateIpAddresses ) {
-		}
-		
-		return null;
-		
+		return result;
 	}
 
 
@@ -149,6 +177,10 @@ public class AWS_PING
 			awsFilters.add(new Filter().withName(keyValues[0]).withValues(keyValues[1].split("\\w*,\\w")));
 		}
 		return awsFilters;
+	}
+	
+	static List<String> parseTagNames( String tagNames ) {
+		return Arrays.asList(tagNames.split("\\w,\\w"));
 	}
 	
 	static String getUrl( HttpClient client, String uri )

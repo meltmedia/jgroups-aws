@@ -1,5 +1,8 @@
 package com.meltmedia.jgroups.aws;
 
+import java.io.DataOutputStream;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -15,11 +18,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.jgroups.Message;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
+import org.jgroups.protocols.BPING;
 import org.jgroups.protocols.Discovery;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.Buffer;
+import org.jgroups.util.ExposedByteArrayOutputStream;
 import org.jgroups.util.Promise;
+import org.jgroups.util.Util;
 import org.jgroups.annotations.Property;
 
 import com.amazonaws.ClientConfiguration;
@@ -39,18 +47,18 @@ import com.amazonaws.services.ec2.model.Tag;
  * References
  * http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeInstances.html
  * http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
- * @author ctrimble
+ * 
+ * @author Christian Trimble
+ * @author John McEntire
  *
  */
 public class AWS_PING
-  extends Discovery
+  extends BPING
 {
 	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
 	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4s";
 	
-	@Property(description="The port to communicate on.")
-	protected String port;
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;
 	@Property(description="The AWS Secret Key for the account to search.")
@@ -71,8 +79,6 @@ public class AWS_PING
 	
 	public void init() throws Exception {
 		super.init();
-		
-		portNumber = Integer.parseInt(port);
 		
 		// get the instance id and private IP address.
 		HttpClient client = null;
@@ -101,10 +107,49 @@ public class AWS_PING
     public void stop() {
         super.stop();
     }
+    
+    @Override
+    protected void sendMcastDiscoveryRequest(Message msg) {
+    	try {
+        	Buffer buf = createBuffer(msg);
+        	List<InetAddress> nodeAddrs = getMatchingNodes();
+        	for( InetAddress nodeAddr : nodeAddrs ) {
+        		try {
+        		  for(int i=bind_port; i <= bind_port+port_range; i++) {
+                    DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(), buf.getLength(), nodeAddr, i);
+                    sock.send(packet);
+                  }
+        		}
+        		catch( Exception e ) {
+        			log.error("failed sedding discovery request to "+nodeAddr, e);
+        		}
+        	}
+        }
+        catch(Exception ex) {
+            log.error("failed sending discovery request", ex);
+        }
+    }
+    
+    protected Buffer createBuffer( Message msg )
+      throws Exception
+    {
+        DataOutputStream out=null;
+        try {
+            if(msg.getSrc() == null)
+                msg.setSrc(local_addr);
+            ExposedByteArrayOutputStream out_stream=new ExposedByteArrayOutputStream(128);
+            out=new DataOutputStream(out_stream);
+            msg.writeTo(out);
+            out.flush();
+            return new Buffer(out_stream.getRawBuffer(), 0, out_stream.size());
+        }
+        finally {
+            Util.close(out);
+        }
+    }
 	
-	@Override
-	public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
-		List<PhysicalAddress> result = new ArrayList<PhysicalAddress>();
+    protected List<InetAddress> getMatchingNodes() {
+		List<InetAddress> result = new ArrayList<InetAddress>();
 		
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
 		List<Filter> filters = new ArrayList<Filter>();
@@ -130,9 +175,9 @@ public class AWS_PING
 		for( Reservation reservation : filterResult.getReservations() ) {
 			for( Instance instance : reservation.getInstances() ) {
 					try {
-						result.add(new IpAddress(instance.getPrivateIpAddress(), portNumber));
+						result.add(InetAddress.getByName(instance.getPrivateIpAddress()));
 					} catch (UnknownHostException e) {
-						log.warn("Could not build IpAddress for "+instance.getImageId());
+						log.warn("Could not build InetAddress for "+instance.getImageId());
 					}
 			}
 		}
@@ -148,7 +193,7 @@ public class AWS_PING
 	
 	@Override
 	public boolean sendDiscoveryRequestsInParallel() {
-		return true;
+		return false;
 	}
 	
 	/**
@@ -196,12 +241,8 @@ public class AWS_PING
 	}
 
 	public static Collection<Tag> getInstanceTags(AmazonEC2 ec2, String instanceId) {
-	  DescribeInstancesRequest request = new DescribeInstancesRequest();
-	  List<String> ids = new ArrayList<String>();
-	  ids.add(instanceId);
-	  request.setInstanceIds(ids);
-	  DescribeInstancesResult response = ec2.describeInstances(request);
-	  List<Tag> tags = new ArrayList<Tag>();
+      List<Tag> tags = new ArrayList<Tag>();
+	  DescribeInstancesResult response = ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(Arrays.asList(instanceId)));
 	  List<Reservation> reservations = response.getReservations();
 	  for(Reservation res : reservations) {
 	    List<Instance> insts = res.getInstances();

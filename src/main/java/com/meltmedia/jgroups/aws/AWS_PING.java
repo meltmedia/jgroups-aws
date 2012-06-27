@@ -350,10 +350,11 @@ public class AWS_PING
                 if(msg.getSrc() != null) {
                   PhysicalAddress addr = (PhysicalAddress) msg.getSrc();
                   cluster_members.add(addr);
+                  log.info("Found potential new member [" + addr + "]");
                 }
               }
             catch( Exception e ) {
-              log.error("failed sedding discovery request to "+nodeAddr, e);
+              log.trace("failed sending discovery request to "+nodeAddr, e);
             }
               finally {
                 Util.close(out);
@@ -386,19 +387,26 @@ public class AWS_PING
         inp = new DataInputStream(in);
         msg=new Message();
         msg.readFrom(inp);
+        log.info("Received msg from "+sock.getRemoteSocketAddress());
         if(msg.getHeader(id) != null) {
           PingHeader hdr = (PingHeader)msg.getHeader(id);
           if(hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
+            log.info("Msg from my cluster");
             msg = new Message();
             PhysicalAddress physical_addr=(PhysicalAddress)down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
             msg.setSrc(physical_addr);
             onp = new DataOutputStream(out);
             msg.writeTo(onp);
             onp.flush();
+          } else {
+            log.info("Msg from other cluster "+hdr.cluster_name);
           }
+        } else {
+          log.info("Invalid msg!");
         }
       }
       catch(SocketException socketEx) {
+        log.warn("Socket failed: ", socketEx);
         break;
       }
       catch(Throwable ex) {

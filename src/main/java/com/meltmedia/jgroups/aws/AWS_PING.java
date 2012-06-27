@@ -58,7 +58,7 @@ public class AWS_PING
 {
 	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
-	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4";
+	//private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4";
 	
     static {
         ClassConfigurator.addProtocol((short)600, AWS_PING.class); // ID needs to be unique
@@ -76,8 +76,6 @@ public class AWS_PING
 	protected String tag_names;
 	
 	private String instanceId;
-	private String localAddress;
-	private int portNumber;
 	private Collection<Filter> awsFilters;
 	private List<String> awsTagNames;
 	private AmazonEC2 ec2;
@@ -90,7 +88,7 @@ public class AWS_PING
 		try {
 			client = new DefaultHttpClient();
 			instanceId = getUrl(client, GET_INSTANCE_ID);
-			localAddress = getUrl(client, GET_LOCAL_ADDR);
+			//localAddress = getUrl(client, GET_LOCAL_ADDR);
 		}
 		finally {
 			HttpClientUtils.closeQuietly(client);
@@ -117,11 +115,13 @@ public class AWS_PING
     @Override
     protected void sendMcastDiscoveryRequest(Message msg) {
     	try {
+    	    log.info("Sending discovery message to: "+msg);
         	Buffer buf = createBuffer(msg);
         	List<InetAddress> nodeAddrs = getMatchingNodes();
         	for( InetAddress nodeAddr : nodeAddrs ) {
         		try {
         		  for(int i=bind_port; i <= bind_port+port_range; i++) {
+        		    log.info("Sending to ["+nodeAddr+":"+i+"]");
                     DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(), buf.getLength(), nodeAddr, i);
                     sock.send(packet);
                   }
@@ -157,7 +157,6 @@ public class AWS_PING
     protected List<InetAddress> getMatchingNodes() {
 		List<InetAddress> result = new ArrayList<InetAddress>();
 		
-		DescribeInstancesRequest request = new DescribeInstancesRequest();
 		List<Filter> filters = new ArrayList<Filter>();
 		
 		// if there are aws tags defined, then look them up and create filters.

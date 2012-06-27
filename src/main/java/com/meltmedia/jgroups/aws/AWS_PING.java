@@ -34,6 +34,7 @@ import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
 import org.jgroups.protocols.BPING;
 import org.jgroups.protocols.Discovery;
+import org.jgroups.protocols.PingData;
 import org.jgroups.protocols.PingHeader;
 import org.jgroups.protocols.TCPPING;
 import org.jgroups.stack.IpAddress;
@@ -339,11 +340,10 @@ public class AWS_PING extends TCPPING implements Runnable {
             inp = new DataInputStream(in);
 
             msg.writeTo(onp);
-            Message responseMsg = new Message();
-            responseMsg.readFrom(inp);
-            log.info("Received response msg ["+responseMsg+"]");
-            if (responseMsg.getSrc() != null) {
-              PhysicalAddress addr = (PhysicalAddress)responseMsg.getSrc();
+            IpAddress addr = new IpAddress();
+            addr.readFrom(inp);
+            log.info("Received response msg ["+addr+"]");
+            if (addr.getPort() >= 0) {
               cluster_members.add(addr);
               log.info("Found potential new member [" + addr + "]");
             }
@@ -384,13 +384,11 @@ public class AWS_PING extends TCPPING implements Runnable {
         if (msg.getHeader(id) != null) {
           PingHeader hdr = (PingHeader) msg.getHeader(id);
           if (hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
-            msg = new Message();
-            //PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
-            //    Event.GET_PHYSICAL_ADDRESS, local_addr));
-            msg.setSrc(local_addr);
+            PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
+                Event.GET_PHYSICAL_ADDRESS, local_addr));
             log.info("Msg from my cluster, sending ["+msg+"]");
             onp = new DataOutputStream(out);
-            msg.writeTo(onp);
+            physical_addr.writeTo(onp);
             onp.flush();
           } else {
             log.trace("Msg from other cluster " + hdr.cluster_name);

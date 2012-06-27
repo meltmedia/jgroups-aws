@@ -124,14 +124,12 @@ public class AWS_PING
         	List<InetAddress> nodeAddrs = getMatchingNodes();
         	for( InetAddress nodeAddr : nodeAddrs ) {
         		try {
-        		  if(!nodeAddr.equals(local_addr)) {
         		  for(int i=bind_port; i <= bind_port+port_range; i++) {
         		    //log.info("Sending to ["+nodeAddr+":"+i+"]");
                     DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(), buf.getLength(), nodeAddr, i);
                     sock.send(packet);
                   }
         		  }
-        		}
         		catch( Exception e ) {
         			log.error("failed sedding discovery request to "+nodeAddr, e);
         		}
@@ -271,7 +269,7 @@ public class AWS_PING
   public void discoveryRequestReceived(Address sender, String logical_name,
       Collection<PhysicalAddress> physical_addrs) {
     super.discoveryRequestReceived(sender, logical_name, physical_addrs);
-    log.info("Received discovery request from ["+sender+"] on ["+logical_name+"] with ["+physical_addrs+"]");
+    log.info("Received discovery request from ["+sender+"] on ["+logical_name+"] with ["+physical_addrs+"] members ["+members+"]");
   }
 
 

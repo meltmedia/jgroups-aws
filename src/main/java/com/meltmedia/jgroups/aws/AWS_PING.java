@@ -59,315 +59,307 @@ import com.amazonaws.services.ec2.model.Tag;
 /**
  * 
  * References
- * http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeInstances.html
- * http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
+ * http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference
+ * /ApiReference-cmd-DescribeInstances.html
+ * http://docs.amazonwebservices.com/AWSEC2
+ * /latest/UserGuide/AESDG-chapter-instancedata.html
  * 
  * @author Christian Trimble
  * @author John McEntire
- *
+ * 
  */
-public class AWS_PING
-  extends TCPPING implements Runnable
-{
-	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
-	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
-	//private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4";
-	
-    static {
-        ClassConfigurator.addProtocol((short)600, AWS_PING.class); // ID needs to be unique
-      }
-	
-	@Property(description="The AWS Access Key for the account to search.")
-	protected String access_key;
-	@Property(description="The AWS Secret Key for the account to search.")
-	protected String secret_key;
-	@Property(description="The URL of the AWS endpoint to use.")
-	protected String endpoint;
-	@Property(description="A semicolon delimited list of filters to search on. (name1=value1,value2;name2=value1,value2)")
-	protected String filters;
-	@Property(description="A list of tags that identify this cluster.")
-	protected String tag_names;
-	
-	@Property(description="Port for discovery packets", systemProperty=Global.BPING_BIND_PORT)
-  protected int bind_port=8555;
+public class AWS_PING extends TCPPING implements Runnable {
+  private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
+  private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI
+      + "instance-id";
+  // private static String GET_LOCAL_ADDR =
+  // INSTANCE_METADATA_BASE_URI+"local-ipv4";
 
-  @Property(description="Sends discovery packets to ports 8555 to (8555+port_range)")
-  protected int port_range=5;
-	
-	private String instanceId;
-	private Collection<Filter> awsFilters;
-	private List<String> awsTagNames;
-	private AmazonEC2 ec2;
-	
-	private ServerSocket tcpSocket;
-  protected volatile Thread receiver=null;
+  static {
+    ClassConfigurator.addProtocol((short) 600, AWS_PING.class); // ID needs to
+                                                                // be unique
+  }
+
+  @Property(description = "The AWS Access Key for the account to search.")
+  protected String access_key;
+  @Property(description = "The AWS Secret Key for the account to search.")
+  protected String secret_key;
+  @Property(description = "The URL of the AWS endpoint to use.")
+  protected String endpoint;
+  @Property(description = "A semicolon delimited list of filters to search on. (name1=value1,value2;name2=value1,value2)")
+  protected String filters;
+  @Property(description = "A list of tags that identify this cluster.")
+  protected String tag_names;
+
+  @Property(description = "Port for discovery packets", systemProperty = Global.BPING_BIND_PORT)
+  protected int bind_port = 8555;
+
+  @Property(description = "Sends discovery packets to ports 8555 to (8555+port_range)")
+  protected int port_range = 5;
+
+  private String instanceId;
+  private Collection<Filter> awsFilters;
+  private List<String> awsTagNames;
+  private AmazonEC2 ec2;
+
+  private ServerSocket tcpSocket;
+  protected volatile Thread receiver = null;
 
   public int getBindPort() {
-      return bind_port;
+    return bind_port;
   }
 
   public void setBindPort(int bind_port) {
-      this.bind_port=bind_port;
+    this.bind_port = bind_port;
   }
-	
-	public void init() throws Exception {
-		super.init();
-		
-		// get the instance id and private IP address.
-		HttpClient client = null;
-		try {
-			client = new DefaultHttpClient();
-			instanceId = getUrl(client, GET_INSTANCE_ID);
-			//localAddress = getUrl(client, GET_LOCAL_ADDR);
-		}
-		finally {
-			HttpClientUtils.closeQuietly(client);
-		}
-		
-		if( filters != null )
-    		awsFilters = parseFilters(filters);
-		if( tag_names != null ) 
-			awsTagNames = parseTagNames(tag_names);
-		
-		ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
-		ec2.setEndpoint(endpoint);
-		
-	}
-	
-    public void start() throws Exception {
-      for(int i=bind_port; i < bind_port+port_range; i++) {
-        try {
-            tcpSocket=new ServerSocket(i);
-            break;
-        }
-        catch(Throwable t) {
-            if(i >= bind_port+port_range-1)
-                throw new RuntimeException("failed to open a port in range [" + bind_port + " - " + (bind_port+port_range) + "]", t);
-        }
-      }
-      tcpSocket.setReuseAddress(true);
-      startReceiver();
-      super.start();
+
+  public void init() throws Exception {
+    super.init();
+
+    // get the instance id and private IP address.
+    HttpClient client = null;
+    try {
+      client = new DefaultHttpClient();
+      instanceId = getUrl(client, GET_INSTANCE_ID);
+      // localAddress = getUrl(client, GET_LOCAL_ADDR);
+    } finally {
+      HttpClientUtils.closeQuietly(client);
     }
 
-    public void stop() {
-      Util.close(tcpSocket);
-      tcpSocket = null;
-      receiver = null;
-      super.stop();
-    }
-    
-    private void startReceiver() {
-      if(receiver == null || !receiver.isAlive()) {
-        receiver=new Thread(Util.getGlobalThreadGroup(), this, "ReceiverThread");
-        receiver.setDaemon(true);
-        receiver.start();
-        if(log.isTraceEnabled())
-            log.trace("receiver thread started");
+    if (filters != null)
+      awsFilters = parseFilters(filters);
+    if (tag_names != null)
+      awsTagNames = parseTagNames(tag_names);
+
+    ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
+    ec2.setEndpoint(endpoint);
+
+  }
+
+  public void start() throws Exception {
+    for (int i = bind_port; i < bind_port + port_range; i++) {
+      try {
+        tcpSocket = new ServerSocket(i);
+        break;
+      } catch (Throwable t) {
+        if (i >= bind_port + port_range - 1)
+          throw new RuntimeException("failed to open a port in range ["
+              + bind_port + " - " + (bind_port + port_range) + "]", t);
       }
     }
-    
-    /*@Override
-    protected void sendMcastDiscoveryRequest(Message msg) {
-    	try {
-    	  if(msg.getSrc() == null) {
-    	    msg.setSrc(local_addr);
-    	  }
-    	    log.info("Sending discovery message to: "+msg);
-        	Buffer buf = createBuffer(msg);
-        	List<InetAddress> nodeAddrs = getMatchingNodes();
-        	for( InetAddress nodeAddr : nodeAddrs ) {
-        		try {
-        		  for(int i=bind_port; i <= bind_port+port_range; i++) {
-        		    //log.info("Sending to ["+nodeAddr+":"+i+"]");
-                    DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(), buf.getLength(), nodeAddr, i);
-                    sock.send(packet);
-                  }
-        		  }
-        		catch( Exception e ) {
-        			log.error("failed sedding discovery request to "+nodeAddr, e);
-        		}
-        	}
-        }
-        catch(Exception ex) {
-            log.error("failed sending discovery request", ex);
-        }
-    }*/
-    
-    protected Buffer createBuffer( Message msg )
-      throws Exception
-    {
-        DataOutputStream out=null;
-        try {
-            if(msg.getSrc() == null)
-                msg.setSrc(local_addr);
-            ExposedByteArrayOutputStream out_stream=new ExposedByteArrayOutputStream(128);
-            out=new DataOutputStream(out_stream);
-            msg.writeTo(out);
-            out.flush();
-            return new Buffer(out_stream.getRawBuffer(), 0, out_stream.size());
-        }
-        finally {
-            Util.close(out);
-        }
+    tcpSocket.setReuseAddress(true);
+    startReceiver();
+    super.start();
+  }
+
+  public void stop() {
+    Util.close(tcpSocket);
+    tcpSocket = null;
+    receiver = null;
+    super.stop();
+  }
+
+  private void startReceiver() {
+    if (receiver == null || !receiver.isAlive()) {
+      receiver = new Thread(Util.getGlobalThreadGroup(), this, "ReceiverThread");
+      receiver.setDaemon(true);
+      receiver.start();
+      if (log.isTraceEnabled())
+        log.trace("receiver thread started");
     }
-	
-    protected List<InetAddress> getMatchingNodes() {
-		List<InetAddress> result = new ArrayList<InetAddress>();
-		
-		List<Filter> filters = new ArrayList<Filter>();
-		
-		// if there are aws tags defined, then look them up and create filters.
-		if( awsTagNames != null ) {
-			Collection<Tag> instanceTags = getInstanceTags(ec2, instanceId);
-			for( Tag instanceTag : instanceTags ) {
-				if( awsTagNames.contains(instanceTag.getKey())) {
-					filters.add(new Filter().withName("tag:"+instanceTag.getKey()).withValues(instanceTag.getValue()));
-				}
-			}
-			
-		}
-		
-		// if there are aws filters defined, then add them to the list.
-		if( awsFilters != null ) {
-			filters.addAll(awsFilters);
-		}
-		
-		// NOTE: the reservations group nodes together by when they were started.  We need to dig through all of the reservations.
-		DescribeInstancesResult filterResult = ec2.describeInstances(new DescribeInstancesRequest().withFilters(filters));
-		for( Reservation reservation : filterResult.getReservations() ) {
-			for( Instance instance : reservation.getInstances() ) {
-					try {
-						result.add(InetAddress.getByName(instance.getPrivateIpAddress()));
-					} catch (UnknownHostException e) {
-						log.warn("Could not build InetAddress for "+instance.getImageId());
-					}
-			}
-		}
-		
-		return result;
-	}
+  }
 
+  /*
+   * @Override protected void sendMcastDiscoveryRequest(Message msg) { try {
+   * if(msg.getSrc() == null) { msg.setSrc(local_addr); }
+   * log.info("Sending discovery message to: "+msg); Buffer buf =
+   * createBuffer(msg); List<InetAddress> nodeAddrs = getMatchingNodes(); for(
+   * InetAddress nodeAddr : nodeAddrs ) { try { for(int i=bind_port; i <=
+   * bind_port+port_range; i++) { //log.info("Sending to ["+nodeAddr+":"+i+"]");
+   * DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(),
+   * buf.getLength(), nodeAddr, i); sock.send(packet); } } catch( Exception e )
+   * { log.error("failed sedding discovery request to "+nodeAddr, e); } } }
+   * catch(Exception ex) { log.error("failed sending discovery request", ex); }
+   * }
+   */
 
-	@Override
-	public boolean isDynamic() {
-		return true;
-	}
-	
-	@Override
-	public boolean sendDiscoveryRequestsInParallel() {
-		return false;
-	}
-	
-	/**
-	 * Returns the unique name for this protocol AWS_PING.
-	 */
-	@Override
-	public String getName() {
-		return "AWS_PING";
-	}
-	
-	static Collection<Filter> parseFilters( String filters ) {
-		List<Filter> awsFilters = new ArrayList<Filter>();
-		
-		String[] filterArray = filters.split("\\w*;\\w*");
-		for( String filterString : filterArray ) {
-			// clean up the filter, moving on if it is empty.
-			String trimmed = filterString.trim();
-			if( trimmed.length() == 0 ) continue;
-			
-			// isolate the key and the values, failing if there is a problem.
-			String[] keyValues = trimmed.split("\\w*=\\w*");
-			if( keyValues.length != 2 || keyValues[0].length() == 0 || keyValues[1].length() == 0 )
-				throw new RuntimeException("Could not process key value pair '"+filterString+"'");
-			
-			// create the filter and add it to the list.
-			awsFilters.add(new Filter().withName(keyValues[0]).withValues(keyValues[1].split("\\w*,\\w")));
-		}
-		return awsFilters;
-	}
-	
-	static List<String> parseTagNames( String tagNames ) {
-		return Arrays.asList(tagNames.split("\\w,\\w"));
-	}
-	
-	static String getUrl( HttpClient client, String uri )
-	  throws Exception
-	{
-	    HttpGet getInstance = new HttpGet();
-	    getInstance.setURI(new URI(uri));
-	    HttpResponse response = client.execute(getInstance);
-	    if( response.getStatusLine().getStatusCode() != HttpStatus.SC_OK ) {
-	    	throw new Exception("Could not get instance ID.");
-	    }
-	    return EntityUtils.toString(response.getEntity());
-	}
+  protected Buffer createBuffer(Message msg) throws Exception {
+    DataOutputStream out = null;
+    try {
+      if (msg.getSrc() == null)
+        msg.setSrc(local_addr);
+      ExposedByteArrayOutputStream out_stream = new ExposedByteArrayOutputStream(
+          128);
+      out = new DataOutputStream(out_stream);
+      msg.writeTo(out);
+      out.flush();
+      return new Buffer(out_stream.getRawBuffer(), 0, out_stream.size());
+    } finally {
+      Util.close(out);
+    }
+  }
 
-	public static Collection<Tag> getInstanceTags(AmazonEC2 ec2, String instanceId) {
-      List<Tag> tags = new ArrayList<Tag>();
-	  DescribeInstancesResult response = ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(Arrays.asList(instanceId)));
-	  List<Reservation> reservations = response.getReservations();
-	  for(Reservation res : reservations) {
-	    List<Instance> insts = res.getInstances();
-	    for(Instance inst : insts) {
-	      List<Tag> instanceTags = inst.getTags();
-	      if(instanceTags != null && instanceTags.size() > 0) {
-	        tags.addAll(instanceTags);
-	      }
-	    }
-	  }
-	  return tags;
-	}
+  protected List<InetAddress> getMatchingNodes() {
+    List<InetAddress> result = new ArrayList<InetAddress>();
+
+    List<Filter> filters = new ArrayList<Filter>();
+
+    // if there are aws tags defined, then look them up and create filters.
+    if (awsTagNames != null) {
+      Collection<Tag> instanceTags = getInstanceTags(ec2, instanceId);
+      for (Tag instanceTag : instanceTags) {
+        if (awsTagNames.contains(instanceTag.getKey())) {
+          filters.add(new Filter().withName("tag:" + instanceTag.getKey())
+              .withValues(instanceTag.getValue()));
+        }
+      }
+
+    }
+
+    // if there are aws filters defined, then add them to the list.
+    if (awsFilters != null) {
+      filters.addAll(awsFilters);
+    }
+
+    // NOTE: the reservations group nodes together by when they were started. We
+    // need to dig through all of the reservations.
+    DescribeInstancesResult filterResult = ec2
+        .describeInstances(new DescribeInstancesRequest().withFilters(filters));
+    for (Reservation reservation : filterResult.getReservations()) {
+      for (Instance instance : reservation.getInstances()) {
+        try {
+          result.add(InetAddress.getByName(instance.getPrivateIpAddress()));
+        } catch (UnknownHostException e) {
+          log.warn("Could not build InetAddress for " + instance.getImageId());
+        }
+      }
+    }
+
+    return result;
+  }
+
+  @Override
+  public boolean isDynamic() {
+    return true;
+  }
+
+  @Override
+  public boolean sendDiscoveryRequestsInParallel() {
+    return false;
+  }
+
+  /**
+   * Returns the unique name for this protocol AWS_PING.
+   */
+  @Override
+  public String getName() {
+    return "AWS_PING";
+  }
+
+  static Collection<Filter> parseFilters(String filters) {
+    List<Filter> awsFilters = new ArrayList<Filter>();
+
+    String[] filterArray = filters.split("\\w*;\\w*");
+    for (String filterString : filterArray) {
+      // clean up the filter, moving on if it is empty.
+      String trimmed = filterString.trim();
+      if (trimmed.length() == 0)
+        continue;
+
+      // isolate the key and the values, failing if there is a problem.
+      String[] keyValues = trimmed.split("\\w*=\\w*");
+      if (keyValues.length != 2 || keyValues[0].length() == 0
+          || keyValues[1].length() == 0)
+        throw new RuntimeException("Could not process key value pair '"
+            + filterString + "'");
+
+      // create the filter and add it to the list.
+      awsFilters.add(new Filter().withName(keyValues[0]).withValues(
+          keyValues[1].split("\\w*,\\w")));
+    }
+    return awsFilters;
+  }
+
+  static List<String> parseTagNames(String tagNames) {
+    return Arrays.asList(tagNames.split("\\w,\\w"));
+  }
+
+  static String getUrl(HttpClient client, String uri) throws Exception {
+    HttpGet getInstance = new HttpGet();
+    getInstance.setURI(new URI(uri));
+    HttpResponse response = client.execute(getInstance);
+    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      throw new Exception("Could not get instance ID.");
+    }
+    return EntityUtils.toString(response.getEntity());
+  }
+
+  public static Collection<Tag> getInstanceTags(AmazonEC2 ec2, String instanceId) {
+    List<Tag> tags = new ArrayList<Tag>();
+    DescribeInstancesResult response = ec2
+        .describeInstances(new DescribeInstancesRequest()
+            .withInstanceIds(Arrays.asList(instanceId)));
+    List<Reservation> reservations = response.getReservations();
+    for (Reservation res : reservations) {
+      List<Instance> insts = res.getInstances();
+      for (Instance inst : insts) {
+        List<Tag> instanceTags = inst.getTags();
+        if (instanceTags != null && instanceTags.size() > 0) {
+          tags.addAll(instanceTags);
+        }
+      }
+    }
+    return tags;
+  }
 
   @Override
   public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
-    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>(this.getInitialHosts());
+    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>(
+        this.getInitialHosts());
     try {
-        Message msg = new Message();
-        PingHeader hdr = new PingHeader();
-        hdr.cluster_name = group_addr;
-        msg.putHeader(id, hdr);
-        log.info("Sending discovery message to: "+msg);
-        List<InetAddress> nodeAddrs = getMatchingNodes();
-        for( InetAddress nodeAddr : nodeAddrs ) {
-            for(int i=bind_port; i <= bind_port+port_range; i++) {
+      Message msg = new Message();
+      PingHeader hdr = new PingHeader();
+      hdr.cluster_name = group_addr;
+      msg.putHeader(id, hdr);
+      log.info("Sending discovery message to: " + msg);
+      List<InetAddress> nodeAddrs = getMatchingNodes();
+      for (InetAddress nodeAddr : nodeAddrs) {
+        for (int i = bind_port; i <= bind_port + port_range; i++) {
 
-              OutputStream out = null;
-              InputStream in = null;
-              DataOutputStream onp = null;
-              DataInputStream inp = null;
-              Socket clientSocket = null;
-              try {
-                clientSocket = new Socket(nodeAddr.getHostAddress(), i);
-                out = clientSocket.getOutputStream();
-                in = clientSocket.getInputStream();
-                onp = new DataOutputStream(out);
-                inp = new DataInputStream(in);
-                
-                msg.writeTo(onp);
-                Message responseMsg = new Message();
-                responseMsg.readFrom(inp);
-                if(msg.getSrc() != null) {
-                  PhysicalAddress addr = (PhysicalAddress) msg.getSrc();
-                  cluster_members.add(addr);
-                  log.info("Found potential new member [" + addr + "]");
-                }
-              }
-            catch( Exception e ) {
-              log.trace("failed sending discovery request to "+nodeAddr, e);
+          OutputStream out = null;
+          InputStream in = null;
+          DataOutputStream onp = null;
+          DataInputStream inp = null;
+          Socket clientSocket = null;
+          try {
+            clientSocket = new Socket(nodeAddr.getHostAddress(), i);
+            out = clientSocket.getOutputStream();
+            in = clientSocket.getInputStream();
+            onp = new DataOutputStream(out);
+            inp = new DataInputStream(in);
+
+            msg.writeTo(onp);
+            Message responseMsg = new Message();
+            responseMsg.readFrom(inp);
+            log.info("Received response msg ["+responseMsg+"]");
+            if (responseMsg.getSrc() != null) {
+              PhysicalAddress addr = (PhysicalAddress) responseMsg.getSrc();
+              cluster_members.add(addr);
+              log.info("Found potential new member [" + addr + "]");
             }
-              finally {
-                Util.close(out);
-                Util.close(in);
-                Util.close(clientSocket);
-              }
-                }
+          } catch (Exception e) {
+            log.trace("failed sending discovery request to " + nodeAddr, e);
+          } finally {
+            Util.close(out);
+            Util.close(in);
+            Util.close(clientSocket);
+          }
         }
       }
-      catch(Exception ex) {
-          log.error("failed sending discovery request", ex);
-      }
-    
+    } catch (Exception ex) {
+      log.error("failed sending discovery request", ex);
+    }
+
     return cluster_members;
   }
 
@@ -376,55 +368,55 @@ public class AWS_PING
     Socket sock = null;
     InputStream in = null;
     OutputStream out = null;
-    DataInputStream inp=null;
+    DataInputStream inp = null;
     DataOutputStream onp = null;
     Message msg;
-    while(tcpSocket != null && receiver != null && Thread.currentThread().equals(receiver)) {
+    while (tcpSocket != null && receiver != null
+        && Thread.currentThread().equals(receiver)) {
       try {
         sock = tcpSocket.accept();
         in = sock.getInputStream();
         out = sock.getOutputStream();
         inp = new DataInputStream(in);
-        msg=new Message();
+        msg = new Message();
         msg.readFrom(inp);
-        log.info("Received msg from "+sock.getRemoteSocketAddress());
-        if(msg.getHeader(id) != null) {
-          PingHeader hdr = (PingHeader)msg.getHeader(id);
-          if(hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
-            log.info("Msg from my cluster");
+        log.info("Received msg from " + sock.getRemoteSocketAddress());
+        if (msg.getHeader(id) != null) {
+          PingHeader hdr = (PingHeader) msg.getHeader(id);
+          if (hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
             msg = new Message();
-            PhysicalAddress physical_addr=(PhysicalAddress)down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
+            PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
+                Event.GET_PHYSICAL_ADDRESS, local_addr));
             msg.setSrc(physical_addr);
+            log.info("Msg from my cluster, sending ["+msg+"]");
             onp = new DataOutputStream(out);
             msg.writeTo(onp);
             onp.flush();
           } else {
-            log.info("Msg from other cluster "+hdr.cluster_name);
+            log.info("Msg from other cluster " + hdr.cluster_name);
           }
         } else {
           log.info("Invalid msg!");
         }
-      }
-      catch(SocketException socketEx) {
+      } catch (SocketException socketEx) {
         log.warn("Socket failed: ", socketEx);
         break;
-      }
-      catch(Throwable ex) {
-          log.error("failed receiving packet (from " + sock.getRemoteSocketAddress() + ")", ex);
-      }
-      finally {
+      } catch (Throwable ex) {
+        log.error(
+            "failed receiving packet (from " + sock.getRemoteSocketAddress()
+                + ")", ex);
+      } finally {
         Util.close(in);
         Util.close(inp);
         Util.close(out);
         Util.close(onp);
         Util.close(sock);
       }
-      
-      if(log.isTraceEnabled())
+
+      if (log.isTraceEnabled())
         log.trace("receiver thread terminated");
     }
-    
-  }
 
+  }
 
 }

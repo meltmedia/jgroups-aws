@@ -333,17 +333,17 @@ public class AWS_PING extends TCPPING implements Runnable {
           DataInputStream inp = null;
           Socket clientSocket = null;
           try {
-            clientSocket = new Socket(nodeAddr.getHostAddress(), i);
+            clientSocket = new Socket(nodeAddr, i);
             out = clientSocket.getOutputStream();
             in = clientSocket.getInputStream();
             onp = new DataOutputStream(out);
             inp = new DataInputStream(in);
 
             msg.writeTo(onp);
-            IpAddress addr = new IpAddress();
-            addr.readFrom(inp);
-            log.info("Received response msg ["+addr+"]");
-            if (addr.getPort() >= 0) {
+            int port = inp.readShort();
+            log.info("Received response port ["+port+"]");
+            if (port >= 0) {
+              IpAddress addr = new IpAddress(nodeAddr, port);
               cluster_members.add(addr);
               log.info("Found potential new member [" + addr + "]");
             }
@@ -388,7 +388,7 @@ public class AWS_PING extends TCPPING implements Runnable {
             //    Event.GET_PHYSICAL_ADDRESS, local_addr));
             log.info("Msg from my cluster, sending ["+local_addr+"]");
             onp = new DataOutputStream(out);
-            local_addr.writeTo(onp);
+            onp.writeShort(((IpAddress)local_addr).getPort());
             onp.flush();
           } else {
             log.trace("Msg from other cluster " + hdr.cluster_name);

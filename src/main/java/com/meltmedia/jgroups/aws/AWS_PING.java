@@ -97,6 +97,7 @@ public class AWS_PING
 			awsTagNames = parseTagNames(tag_names);
 		
 		ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
+		ec2.setEndpoint(endpoint);
 		
 	}
 	

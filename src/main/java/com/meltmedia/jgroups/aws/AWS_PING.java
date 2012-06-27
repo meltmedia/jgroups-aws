@@ -29,6 +29,7 @@ import org.jgroups.util.ExposedByteArrayOutputStream;
 import org.jgroups.util.Promise;
 import org.jgroups.util.Util;
 import org.jgroups.annotations.Property;
+import org.jgroups.conf.ClassConfigurator;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
@@ -58,6 +59,10 @@ public class AWS_PING
 	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
 	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4";
+	
+    static {
+        ClassConfigurator.addProtocol((short)600, AWS_PING.class); // ID needs to be unique
+      }
 	
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;

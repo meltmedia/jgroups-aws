@@ -384,11 +384,11 @@ public class AWS_PING extends TCPPING implements Runnable {
         if (msg.getHeader(id) != null) {
           PingHeader hdr = (PingHeader) msg.getHeader(id);
           if (hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
-            //PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
-            //    Event.GET_PHYSICAL_ADDRESS, local_addr));
-            log.info("Msg from my cluster, sending ["+local_addr+"]");
+            PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
+                Event.GET_PHYSICAL_ADDRESS, local_addr));
+            log.info("Msg from my cluster, sending ["+physical_addr+"]");
             onp = new DataOutputStream(out);
-            onp.writeShort(((IpAddress)local_addr).getPort());
+            onp.writeShort(((IpAddress)physical_addr).getPort());
             onp.flush();
           } else {
             log.trace("Msg from other cluster " + hdr.cluster_name);

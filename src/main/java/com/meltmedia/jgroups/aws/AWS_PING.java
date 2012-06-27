@@ -321,7 +321,7 @@ public class AWS_PING extends TCPPING implements Runnable {
       PingHeader hdr = new PingHeader();
       hdr.cluster_name = group_addr;
       msg.putHeader(id, hdr);
-      log.info("Sending discovery message to: " + msg);
+      log.trace("Sending discovery message to: " + msg);
       List<InetAddress> nodeAddrs = getMatchingNodes();
       for (InetAddress nodeAddr : nodeAddrs) {
         for (int i = bind_port; i <= bind_port + port_range; i++) {
@@ -341,7 +341,7 @@ public class AWS_PING extends TCPPING implements Runnable {
             msg.writeTo(onp);
             Message responseMsg = new Message();
             responseMsg.readFrom(inp);
-            log.info("Received response msg ["+responseMsg+"]");
+            log.trace("Received response msg ["+responseMsg+"]");
             if (responseMsg.getSrc() != null) {
               PhysicalAddress addr = (PhysicalAddress) responseMsg.getSrc();
               cluster_members.add(addr);
@@ -380,23 +380,23 @@ public class AWS_PING extends TCPPING implements Runnable {
         inp = new DataInputStream(in);
         msg = new Message();
         msg.readFrom(inp);
-        log.info("Received msg from " + sock.getRemoteSocketAddress());
+        log.trace("Received msg from " + sock.getRemoteSocketAddress());
         if (msg.getHeader(id) != null) {
           PingHeader hdr = (PingHeader) msg.getHeader(id);
           if (hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
             msg = new Message();
-            PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
-                Event.GET_PHYSICAL_ADDRESS, local_addr));
-            msg.setSrc(physical_addr);
-            log.info("Msg from my cluster, sending ["+msg+"]");
+            //PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
+            //    Event.GET_PHYSICAL_ADDRESS, local_addr));
+            msg.setSrc(local_addr);
+            log.trace("Msg from my cluster, sending ["+msg+"]");
             onp = new DataOutputStream(out);
             msg.writeTo(onp);
             onp.flush();
           } else {
-            log.info("Msg from other cluster " + hdr.cluster_name);
+            log.trace("Msg from other cluster " + hdr.cluster_name);
           }
         } else {
-          log.info("Invalid msg!");
+          log.trace("Invalid msg!");
         }
       } catch (SocketException socketEx) {
         log.warn("Socket failed: ", socketEx);

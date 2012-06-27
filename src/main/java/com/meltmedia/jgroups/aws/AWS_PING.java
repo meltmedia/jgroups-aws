@@ -340,7 +340,7 @@ public class AWS_PING extends TCPPING implements Runnable {
             inp = new DataInputStream(in);
 
             msg.writeTo(onp);
-            int port = inp.readShort();
+            int port = inp.readInt();
             log.info("Received response port ["+port+"]");
             if (port >= 0) {
               IpAddress addr = new IpAddress(nodeAddr, port);
@@ -388,7 +388,7 @@ public class AWS_PING extends TCPPING implements Runnable {
                 Event.GET_PHYSICAL_ADDRESS, local_addr));
             log.info("Msg from my cluster, sending ["+physical_addr+"]");
             onp = new DataOutputStream(out);
-            onp.writeShort(((IpAddress)physical_addr).getPort());
+            onp.writeInt(((IpAddress)physical_addr).getPort());
             onp.flush();
           } else {
             log.trace("Msg from other cluster " + hdr.cluster_name);

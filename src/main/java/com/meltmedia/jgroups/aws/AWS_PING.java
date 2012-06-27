@@ -321,7 +321,7 @@ public class AWS_PING
 
   @Override
   public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
-    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>();
+    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>(this.getInitialHosts());
     try {
         Message msg = new Message();
         PingHeader hdr = new PingHeader();

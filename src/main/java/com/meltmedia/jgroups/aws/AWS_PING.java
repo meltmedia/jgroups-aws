@@ -115,16 +115,21 @@ public class AWS_PING
     @Override
     protected void sendMcastDiscoveryRequest(Message msg) {
     	try {
+    	  if(msg.getSrc() == null) {
+    	    msg.setSrc(local_addr);
+    	  }
     	    log.info("Sending discovery message to: "+msg);
         	Buffer buf = createBuffer(msg);
         	List<InetAddress> nodeAddrs = getMatchingNodes();
         	for( InetAddress nodeAddr : nodeAddrs ) {
         		try {
+        		  if(!nodeAddr.equals(local_addr)) {
         		  for(int i=bind_port; i <= bind_port+port_range; i++) {
         		    log.info("Sending to ["+nodeAddr+":"+i+"]");
                     DatagramPacket packet=new DatagramPacket(buf.getBuf(), buf.getOffset(), buf.getLength(), nodeAddr, i);
                     sock.send(packet);
                   }
+        		  }
         		}
         		catch( Exception e ) {
         			log.error("failed sedding discovery request to "+nodeAddr, e);

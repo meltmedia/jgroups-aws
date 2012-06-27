@@ -341,9 +341,9 @@ public class AWS_PING extends TCPPING implements Runnable {
             msg.writeTo(onp);
             Message responseMsg = new Message();
             responseMsg.readFrom(inp);
-            log.trace("Received response msg ["+responseMsg+"]");
+            log.info("Received response msg ["+responseMsg+"]");
             if (responseMsg.getSrc() != null) {
-              PhysicalAddress addr = (PhysicalAddress) responseMsg.getSrc();
+              PhysicalAddress addr = (PhysicalAddress)responseMsg.getSrc();
               cluster_members.add(addr);
               log.info("Found potential new member [" + addr + "]");
             }
@@ -388,7 +388,7 @@ public class AWS_PING extends TCPPING implements Runnable {
             //PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
             //    Event.GET_PHYSICAL_ADDRESS, local_addr));
             msg.setSrc(local_addr);
-            log.trace("Msg from my cluster, sending ["+msg+"]");
+            log.info("Msg from my cluster, sending ["+msg+"]");
             onp = new DataOutputStream(out);
             msg.writeTo(onp);
             onp.flush();

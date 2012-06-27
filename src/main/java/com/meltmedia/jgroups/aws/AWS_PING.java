@@ -57,7 +57,7 @@ public class AWS_PING
 {
 	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
-	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4s";
+	private static String GET_LOCAL_ADDR = INSTANCE_METADATA_BASE_URI+"local-ipv4";
 	
 	@Property(description="The AWS Access Key for the account to search.")
 	protected String access_key;

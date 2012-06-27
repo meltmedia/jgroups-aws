@@ -84,8 +84,8 @@ public class AWS_PING
 		HttpClient client = null;
 		try {
 			client = new DefaultHttpClient();
-			instanceId = getUrl(client, INSTANCE_METADATA_BASE_URI);
-			localAddress = getUrl(client, INSTANCE_METADATA_BASE_URI);
+			instanceId = getUrl(client, GET_INSTANCE_ID);
+			localAddress = getUrl(client, GET_LOCAL_ADDR);
 		}
 		finally {
 			HttpClientUtils.closeQuietly(client);

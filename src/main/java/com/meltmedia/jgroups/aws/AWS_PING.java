@@ -1,14 +1,22 @@
 package com.meltmedia.jgroups.aws;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
@@ -19,11 +27,15 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jgroups.Address;
+import org.jgroups.Event;
+import org.jgroups.Global;
 import org.jgroups.Message;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.ViewId;
 import org.jgroups.protocols.BPING;
 import org.jgroups.protocols.Discovery;
+import org.jgroups.protocols.PingHeader;
+import org.jgroups.protocols.TCPPING;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.ExposedByteArrayOutputStream;
@@ -55,7 +67,7 @@ import com.amazonaws.services.ec2.model.Tag;
  *
  */
 public class AWS_PING
-  extends BPING
+  extends TCPPING implements Runnable
 {
 	private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
 	private static String GET_INSTANCE_ID = INSTANCE_METADATA_BASE_URI+"instance-id";
@@ -76,10 +88,27 @@ public class AWS_PING
 	@Property(description="A list of tags that identify this cluster.")
 	protected String tag_names;
 	
+	@Property(description="Port for discovery packets", systemProperty=Global.BPING_BIND_PORT)
+  protected int bind_port=8555;
+
+  @Property(description="Sends discovery packets to ports 8555 to (8555+port_range)")
+  protected int port_range=5;
+	
 	private String instanceId;
 	private Collection<Filter> awsFilters;
 	private List<String> awsTagNames;
 	private AmazonEC2 ec2;
+	
+	private ServerSocket tcpSocket;
+  protected volatile Thread receiver=null;
+
+  public int getBindPort() {
+      return bind_port;
+  }
+
+  public void setBindPort(int bind_port) {
+      this.bind_port=bind_port;
+  }
 	
 	public void init() throws Exception {
 		super.init();
@@ -106,14 +135,39 @@ public class AWS_PING
 	}
 	
     public void start() throws Exception {
-        super.start();
+      for(int i=bind_port; i < bind_port+port_range; i++) {
+        try {
+            tcpSocket=new ServerSocket(i);
+            break;
+        }
+        catch(Throwable t) {
+            if(i >= bind_port+port_range-1)
+                throw new RuntimeException("failed to open a port in range [" + bind_port + " - " + (bind_port+port_range) + "]", t);
+        }
+      }
+      tcpSocket.setReuseAddress(true);
+      startReceiver();
+      super.start();
     }
 
     public void stop() {
-        super.stop();
+      Util.close(tcpSocket);
+      tcpSocket = null;
+      receiver = null;
+      super.stop();
     }
     
-    @Override
+    private void startReceiver() {
+      if(receiver == null || !receiver.isAlive()) {
+        receiver=new Thread(Util.getGlobalThreadGroup(), this, "ReceiverThread");
+        receiver.setDaemon(true);
+        receiver.start();
+        if(log.isTraceEnabled())
+            log.trace("receiver thread started");
+      }
+    }
+    
+    /*@Override
     protected void sendMcastDiscoveryRequest(Message msg) {
     	try {
     	  if(msg.getSrc() == null) {
@@ -138,7 +192,7 @@ public class AWS_PING
         catch(Exception ex) {
             log.error("failed sending discovery request", ex);
         }
-    }
+    }*/
     
     protected Buffer createBuffer( Message msg )
       throws Exception
@@ -266,10 +320,102 @@ public class AWS_PING
 	}
 
   @Override
-  public void discoveryRequestReceived(Address sender, String logical_name,
-      Collection<PhysicalAddress> physical_addrs) {
-    super.discoveryRequestReceived(sender, logical_name, physical_addrs);
-    log.info("Received discovery request from ["+sender+"] on ["+logical_name+"] with ["+physical_addrs+"] members ["+members+"]");
+  public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
+    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>();
+    try {
+        Message msg = new Message();
+        PingHeader hdr = new PingHeader();
+        hdr.cluster_name = group_addr;
+        msg.putHeader(id, hdr);
+        log.info("Sending discovery message to: "+msg);
+        List<InetAddress> nodeAddrs = getMatchingNodes();
+        for( InetAddress nodeAddr : nodeAddrs ) {
+            for(int i=bind_port; i <= bind_port+port_range; i++) {
+
+              OutputStream out = null;
+              InputStream in = null;
+              DataOutputStream onp = null;
+              DataInputStream inp = null;
+              Socket clientSocket = null;
+              try {
+                clientSocket = new Socket(nodeAddr.getHostAddress(), i);
+                out = clientSocket.getOutputStream();
+                in = clientSocket.getInputStream();
+                onp = new DataOutputStream(out);
+                inp = new DataInputStream(in);
+                
+                msg.writeTo(onp);
+                Message responseMsg = new Message();
+                responseMsg.readFrom(inp);
+                if(msg.getSrc() != null) {
+                  PhysicalAddress addr = (PhysicalAddress) msg.getSrc();
+                  cluster_members.add(addr);
+                }
+              }
+            catch( Exception e ) {
+              log.error("failed sedding discovery request to "+nodeAddr, e);
+            }
+              finally {
+                Util.close(out);
+                Util.close(in);
+                Util.close(clientSocket);
+              }
+                }
+        }
+      }
+      catch(Exception ex) {
+          log.error("failed sending discovery request", ex);
+      }
+    
+    return cluster_members;
+  }
+
+  @Override
+  public void run() {
+    Socket sock = null;
+    InputStream in = null;
+    OutputStream out = null;
+    DataInputStream inp=null;
+    DataOutputStream onp = null;
+    Message msg;
+    while(tcpSocket != null && receiver != null && Thread.currentThread().equals(receiver)) {
+      try {
+        sock = tcpSocket.accept();
+        in = sock.getInputStream();
+        out = sock.getOutputStream();
+        inp = new DataInputStream(in);
+        msg=new Message();
+        msg.readFrom(inp);
+        if(msg.getHeader(id) != null) {
+          PingHeader hdr = (PingHeader)msg.getHeader(id);
+          if(hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
+            msg = new Message();
+            PhysicalAddress physical_addr=(PhysicalAddress)down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
+            msg.setSrc(physical_addr);
+            onp = new DataOutputStream(out);
+            msg.writeTo(onp);
+            onp.flush();
+          }
+        }
+      }
+      catch(SocketException socketEx) {
+        break;
+      }
+      catch(Throwable ex) {
+          log.error("failed receiving packet (from " + sock.getRemoteSocketAddress() + ")", ex);
+      }
+      finally {
+        Util.close(in);
+        Util.close(inp);
+        Util.close(out);
+        Util.close(onp);
+        Util.close(sock);
+      }
+      
+      if(log.isTraceEnabled())
+        log.trace("receiver thread terminated");
+    }
+    
   }
 
 

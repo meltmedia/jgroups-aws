@@ -115,7 +115,6 @@ public class AWS_PING extends TCPPING implements Runnable {
   }
 
   public void init() throws Exception {
-    super.init();
 
     // get the instance id and private IP address.
     HttpClient client = null;
@@ -135,6 +134,7 @@ public class AWS_PING extends TCPPING implements Runnable {
     ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
     ec2.setEndpoint(endpoint);
 
+    super.init();
   }
 
   public void start() throws Exception {
@@ -244,11 +244,6 @@ public class AWS_PING extends TCPPING implements Runnable {
     return true;
   }
 
-  @Override
-  public boolean sendDiscoveryRequestsInParallel() {
-    return false;
-  }
-
   /**
    * Returns the unique name for this protocol AWS_PING.
    */
@@ -315,8 +310,7 @@ public class AWS_PING extends TCPPING implements Runnable {
 
   @Override
   public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
-    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>(
-        this.getInitialHosts());
+    Set<PhysicalAddress> cluster_members = new HashSet<PhysicalAddress>(super.fetchClusterMembers(cluster_name));
     try {
       Message msg = new Message();
       PingHeader hdr = new PingHeader();

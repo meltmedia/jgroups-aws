@@ -162,7 +162,7 @@ public class AWS_PING extends TCPPING implements Runnable {
 
   private void startReceiver() {
     if (receiver == null || !receiver.isAlive()) {
-      receiver = new Thread(getChannelThreadGroup(), this, "ReceiverThread");
+      receiver = new Thread(Util.getGlobalThreadGroup(), this, "ReceiverThread");
       receiver.setDaemon(true);
       receiver.start();
       if (log.isTraceEnabled())

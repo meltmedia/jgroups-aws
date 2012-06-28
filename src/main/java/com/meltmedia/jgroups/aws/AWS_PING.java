@@ -92,7 +92,7 @@ public class AWS_PING
     @Property(description="Number of additional ports to be probed for membership. A port_range of 0 does not " +
     	      "probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes " +
     	      "A:7800 and A:7801")
-    private int port_range=1;
+    private int port_range=50;
     @Property(description="The port number being used for cluster membership.  The default is 7800.")
     private int port_number = 7800;
 
@@ -180,18 +180,20 @@ public class AWS_PING
     /**
      * Fetches all of the cluster members found on EC2.  The host portion of the addresses are the 
      * private ip addresses of the matching nodes.  The port numbers of the addresses are set to the
-     * port number specified on this protocol.
+     * port number plus all the ports in the range after that specified on this protocol.
      * 
      * @return the cluster members.
      */
     public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
     	List<PhysicalAddress> clusterMembers = new ArrayList<PhysicalAddress>();
     	for( String privateIpAddress : getPrivateIpAddresses() ) {
-    		try {
-				clusterMembers.add(new IpAddress(privateIpAddress, port_number));
-			} catch (UnknownHostException e) {
-				log.warn("Could not create an IpAddress for "+privateIpAddress+":"+port_number);
-			}
+    	  for(int i = port_number; i < port_number + port_range; i++) {
+      		try {
+      		  clusterMembers.add(new IpAddress(privateIpAddress, i));
+    			} catch (UnknownHostException e) {
+    				log.warn("Could not create an IpAddress for "+privateIpAddress+":"+i);
+    			}
+    	  }
     	}
     	return clusterMembers;
     }

@@ -339,7 +339,7 @@ public class AWS_PING extends TCPPING implements Runnable {
             if (port >= 0) {
               IpAddress addr = new IpAddress(nodeAddr, port);
               cluster_members.add(addr);
-              log.trace("Found potential new member [" + addr + "]");
+              log.info("Found potential new member [" + addr + "]");
             }
           } catch (Exception e) {
             log.trace("failed sending discovery request to " + nodeAddr, e);
@@ -380,7 +380,7 @@ public class AWS_PING extends TCPPING implements Runnable {
           if (hdr.cluster_name != null && hdr.cluster_name.equals(group_addr)) {
             PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(
                 Event.GET_PHYSICAL_ADDRESS, local_addr));
-            log.trace("Msg from my cluster, sending ["+physical_addr+"]");
+            log.info("Msg from my cluster, sending ["+physical_addr+"]");
             onp = new DataOutputStream(out);
             onp.writeInt(((IpAddress)physical_addr).getPort());
             onp.flush();

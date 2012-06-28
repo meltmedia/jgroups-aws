@@ -26,7 +26,7 @@ and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
          access_key="AWS_ACCESS_KEY"
          secret_key="AWS_SECRET_KEY"/>
 ```
-see the configuration section for information.  You can find an [example stack](./conf/aws_ping.xml) in the config directory.
+see the configuration section for information.  You can find an example stack in conf/aws_ping.xml.
 
 This implementation will only work from inside EC2, since it uses environment information to auto wire itself.  See the
 Setting Up EC2 section for more information.

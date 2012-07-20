@@ -236,13 +236,13 @@ public class AWS_PING
 	}
 
     /**
-     * Returns false.
+     * Returns true.
      * 
-     * @return false
+     * @return true
      */
 	@Override
 	public boolean isDynamic() {
-		return false;
+		return true;
 	}
 	
 	/**

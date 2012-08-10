@@ -14,7 +14,20 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-    <dependencies>
+  <name>JGroups AWS Discovery</name>
+  <url>https://github.com/meltmedia/jgroups-aws</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <scm>
+    <connection>scm:git@github.com:meltmedia/jgroups-aws.git</connection>
+    <developerConnection>scm:git:git@github.com:meltmedia/jgroups-aws.git</developerConnection>
+    <url>git@github.com:meltmedia/jgroups-aws.git</url>
+  </scm>
+
+  <dependencies>
     <dependency>
       <groupId>org.jgroups</groupId>
       <artifactId>jgroups</artifactId>
@@ -60,14 +73,7 @@
       <version>4.10</version>
       <scope>test</scope>
     </dependency>
-    </dependencies>
-
-  <name>JGroups AWS Discovery</name>
-  <url>https://github.com/meltmedia/jgroups-aws</url>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+  </dependencies>
 
   <build>
     <pluginManagement>

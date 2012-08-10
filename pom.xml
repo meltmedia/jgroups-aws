@@ -6,10 +6,10 @@
   <parent>
     <groupId>com.meltmedia</groupId>
     <artifactId>meltmedia-oss</artifactId>
-    <version>1-SNAPSHOT</version>
+    <version>1</version>
   </parent>
 
-  <groupId>com.meltmedia.jgroups.aws</groupId>
+  <groupId>com.meltmedia.jgroups</groupId>
   <artifactId>jgroups-aws</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>

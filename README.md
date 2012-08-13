@@ -48,15 +48,15 @@ You will need to setup the following in EC2, before using this package:
 * You will need to create a user in the IAM console.  You will need the API access key and secret key for the user.  You will also 
 need to grant the user permission to the "ec2:Describe*" action.
 * In the EC2 console, you will need to create a security group for your instances.  This security group will need a TCP_ALL rule,
-with itself as the source (put the security groups name in the source filed.)  This will allow all of the nodes in the security
+with itself as the source (put the security group's name in the source field.)  This will allow all of the nodes in that security
 group to communicate with each other.
-* Create 2 EC2 nodes, making sure to include the security group granting TCP communication.
+* Create two EC2 nodes, making sure to include the security group granting TCP communication.
 * If you are going to use the tag matching feature, then define a few tags on the nodes with matching values.
 
 Setting up JGroups Chat Demo
 ----------------------------
 The JGroups project provides a chat application that is great for testing your configuration.  To set up the chat application,
-first create 2 EC2 nodes, following the Setting Up EC2 instructions.  Once the nodes are created, SSH into each machine and
+first create two EC2 nodes, following the Setting Up EC2 instructions.  Once the nodes are created, SSH into each machine and
 install the java 6 JDK, Maven 3, and Git.
 ```
 sudo apt-get install openjdk-6-jdk

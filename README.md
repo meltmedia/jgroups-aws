@@ -13,7 +13,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups.aws</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
 ```
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
@@ -70,14 +70,7 @@ mkdir ~/git
 ```
 Now your machine is ready to compile maven projects.
 
-Next you will need to clone meltmedia's oss-parent pom (until we get it on central) and build it.
-```
-cd git
-git clone git://github.com/meltmedia/oss-parent.git
-cd oss-parent
-mvn clean install
-```
-Now that the parent pom is built, you are ready to clone and build this project.
+Next, clone and build this project.
 ```
 cd ~/git
 git clone git://github.com/meltmedia/jgroups-aws.git

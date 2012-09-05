@@ -232,7 +232,12 @@ public class AWS_PING extends Discovery {
     super.start();
 
     // start up a new ec2 client with the region specific endpoint.
-    ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
+    if( access_key == null && secret_key == null ) {
+      ec2 = new AmazonEC2Client();
+    }
+    else {
+      ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
+    }
     ec2.setEndpoint(endpoint);
   }
 

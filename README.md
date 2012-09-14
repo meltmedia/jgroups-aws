@@ -13,7 +13,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups.aws</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.0.0</version>
+      <version>1.1.0</version>
     </dependency>
 ```
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
@@ -38,15 +38,16 @@ Configuration Options
 * tags - A comma delimited list of EC2 node tag names.  The current nodes values are matched against other nodes to find
 cluster members.
 * filters - A colon delimited list of filters.  Each filter defines a name and a comma delimited list of possible values.
-All filters mutch mach a node for it to be a cluster member.
-* access_key (required) - the access key for an AWS user with permission to the "ec2:Describe*" action.
-* secret_key (required) - the secret key for the AWS user.
+All filters must match a node for it to be a cluster member.
+* access_key and secret_key - the access key and secret key for an AWS user with permission to the "ec2:Describe*" action.  If both
+of these attributes are not specified, then the instance profile for the EC2 instance will be used (Since version 1.1).
 
 Setting Up EC2
 --------------
 You will need to setup the following in EC2, before using this package:
-* You will need to create a user in the IAM console.  You will need the API access key and secret key for the user.  You will also 
-need to grant the user permission to the "ec2:Describe*" action.
+* The EC2 instances will need permission to the "ec2:Describe*" action.  You can either create an IAM user with this permission
+and pass the users credentials with the access_key and secret_key attributes or associate an instance profile with that permission
+to the instances and not specify the access_key and secret_key attributes.
 * In the EC2 console, you will need to create a security group for your instances.  This security group will need a TCP_ALL rule,
 with itself as the source (put the security group's name in the source field.)  This will allow all of the nodes in that security
 group to communicate with each other.

@@ -52,79 +52,79 @@ import com.amazonaws.services.ec2.model.Tag;
  * similar tags. This discovery protocol is designed to work with the TCP
  * protocol.
  * </p>
- * 
- * <h3>To use AWS_PING, you will need:</h3>
+ *
+ * <h3>Requirements</h3>
  * <ul>
- * <li>An AWS user with permission to the "ec2:Describe*" action. You will also
- * need that users access key and secret key for accessing the EC2 API.</li>
- * <li>Two or more nodes who's security rules allow TCP communication. This can
- * be achieved by placing all of the nodes in a common security group and then
- * adding an ALL TCP rule with itself as the source.</li>
- * <li>To be operating inside of EC2. This protocol relies on EC2 specific
- * environment information to auto-wire itself. It will not work from outside
- * that environment.</li>
+ *   <li>The EC2 instances must be in the same region.</li>
+ *   <li>The "ec2:Describe*" action must be accessable using either IAM credentials or an IAM instance profile.</li>
+ *   <li>The security rules must allow TCP communication between the nodes that are discovered.</li>
  * </ul>
- * 
- * <h3>Using Tags to Cluster</h3>
+ *
+ * <h3>Tag Matching</h3>
  * <p>
- * The AWS_PING protocol allows you to specify cluster members using EC2's tag
- * feature. You simply need to define similar tags on a set of EC2 nodes and
- * then specify those tags in the AWS_PING element. For example, if you wanted
- * to cluster nodes based on their Type and Environment tags, you would define
- * those tags on the target members and specify the AWS_PING tag like this:
+ * To use the tag matching feature, use the tags attribute to specify a comma delimited list of tags.  All of the nodes
+ * with matching values for these tags will be discovered.
  * </p>
- * <p>
+ * 
  * <blockquote>
- * 
  * <pre>
- * &lt;com.meltmedia.jgroups.aws.AWS_PING timeout="3000" port_number="7800" tags="Type,Environment" access_key="YOUR_AWS_ACCESS_KEY" secret_key="YOUR_AWS_SECRET_KEY"/&gt;
+ * &lt;com.meltmedia.jgroups.aws.AWS_PING
+ *   timeout="3000"
+ *   port_number="7800"
+ *   tags="Type,Environment"
+ *   access_key="YOUR_AWS_ACCESS_KEY"
+ *   secret_key="YOUR_AWS_SECRET_KEY"/&gt;
  * </pre>
- * 
  * </blockquote>
+ *
  * </p>
+ *
+ * <h3>EC2 Filters</h3>
  * <p>
- * When each node starts, they will look up their own values for the Type and
- * Environment tags and then cluster with the other nodes that also specify
- * those tags with matching values.
+ * To use EC2's filtering feature to discover nodes, specify the filters attribute.  The format for this attribute is:
  * </p>
- * 
- * <h3>Using Filters to Cluster</h3>
- * <p>
- * The AWS_PING protocol also allows you to specify cluster members using EC2's
- * filtering feature. Filters are specified with the filters attribute. Values
- * of this attribute take the form:
- * </p>
- * <p>
+ *
  * <blockquote>
- * 
  * <pre>
- *   FILTERS ::= &lt;FILTER&gt; (';' &lt;FILTER&gt;)*
- *   FILTER  ::= &lt;NAME&gt; '=' &lt;VALUE&gt; (',' &lt;VALUE&gt;)*
+ * FILTERS ::= &lt;FILTER&gt; (';' &lt;FILTER&gt;)*
+ * FILTER  ::= &lt;NAME&gt; '=' &lt;VALUE&gt; (',' &lt;VALUE&gt;)*
  * </pre>
- * 
  * </blockquote>
- * </p>
+ *
  * <p>
- * When evaluated, the individual filters match an EC2 instance if the name
- * matches any of the specified values. For a node to match, it must match all
- * of the filters specified. For example, if you wanted to cluster with all of
- * the running, small instances in your account, you could specify:
+ * EC2 instances that match all of the supplied filters will be returned.  For example,
+ * if you wanted to cluster with all of the running, small instances in your account, you could specify:
  * </p>
- * <p>
  * <blockquote>
- * 
  * <pre>
- *   &lt;com.meltmedia.jgroups.aws.AWS_PING timeout="3000" port_number="7800" filters="instance-state-name=running;instance-type=m1.small" access_key="YOUR_AWS_ACCESS_KEY" secret_key="YOUR_AWS_SECRET_KEY"/&gt;
+ * &lt;com.meltmedia.jgroups.aws.AWS_PING
+ *   timeout="3000"
+ *   port_number="7800"
+ *   filters="instance-state-name=running;instance-type=m1.small"
+ *   access_key="YOUR_AWS_ACCESS_KEY"
+ *   secret_key="YOUR_AWS_SECRET_KEY"/&gt;
  * </pre>
- * 
  * </blockquote>
+ *
+ * <h3>IAM Instance Profiles</h3>
+ * <p>
+ * Starting with version 1.1.0, instance profiles are supported by AWS_PING.  To use the instance profile associated with
+ * an EC2 instance, simply omit the access_key and secret_key attributes:
  * </p>
+ * <blockquote>
+ * <pre>
+ * &lt;com.meltmedia.jgroups.aws.AWS_PING
+ *   timeout="3000"
+ *   port_number="7800"
+ *   tags="Type,Environment"/&gt;
+ * </pre>
+ * </blockquote>
+ *
  * <h3>References</h3>
  * <ul>
- * <li>http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/
- * ApiReference-cmd-DescribeInstances.html</li>
- * <li>http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-
- * instancedata.html</li>
+ *   <li><a href="http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/Using_Filtering.html">EC2 Using Filtering</a></li>
+ *   <li><a href="http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeInstances.html">EC2 Describe Instances</a></li>
+ *   <li><a href="http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html">EC2 Instance Metadata</a></li>
  * </ul>
  * 
  * @author Christian Trimble

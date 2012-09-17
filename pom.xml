@@ -14,7 +14,8 @@
   <packaging>jar</packaging>
 
   <name>JGroups AWS Discovery</name>
-  <url>https://github.com/meltmedia/jgroups-aws</url>
+  <description>A JGroups ping implementation that uses the AWS APIs for node discovery.</description>
+  <url>http://meltmedia.github.com/jgroups-aws</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +26,13 @@
     <developerConnection>scm:git:git@github.com:meltmedia/jgroups-aws.git</developerConnection>
     <url>git@github.com:meltmedia/jgroups-aws.git</url>
   </scm>
+
+  <distributionManagement>
+    <site>
+      <id>github-project-site</id>
+      <url>gitsite:git@github.com/meltmedia/jgroups-aws.git</url>
+    </site>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -74,8 +82,37 @@
           </dependency>
         </dependencies>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.1</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-module-markdown</artifactId>
+              <version>1.3</version>
+          </dependency>
+        </dependencies>
+      </plugin>
     </plugins>
     </pluginManagement>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.scm</groupId>
+        <artifactId>maven-scm-provider-gitexe</artifactId>
+        <version>1.3</version>
+      </extension>
+      <extension>
+        <groupId>org.apache.maven.scm</groupId>
+        <artifactId>maven-scm-manager-plexus</artifactId>
+        <version>1.3</version>
+      </extension>
+      <extension>
+        <groupId>com.github.stephenc.wagon</groupId>
+        <artifactId>wagon-gitsite</artifactId>
+        <version>0.4.1</version>
+      </extension>
+    </extensions>
   </build>
 
 </project>

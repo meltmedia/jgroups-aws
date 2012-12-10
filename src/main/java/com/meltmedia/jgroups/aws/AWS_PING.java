@@ -26,7 +26,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jgroups.PhysicalAddress;
@@ -206,7 +205,9 @@ public class AWS_PING extends Discovery {
       instanceId = getBody(client, GET_INSTANCE_ID);
       availabilityZone = getBody(client, GET_AVAILABILITY_ZONE);
     } finally {
-      HttpClientUtils.closeQuietly(client);
+      if(client != null) {
+        client.getConnectionManager().shutdown();
+      }
     }
 
     if (filters != null)

@@ -13,7 +13,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.1.0</version>
+      <version>1.2.0</version>
     </dependency>
 ```
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:

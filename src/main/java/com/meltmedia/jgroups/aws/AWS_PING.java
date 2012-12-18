@@ -15,6 +15,7 @@
  */
 package com.meltmedia.jgroups.aws;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -33,8 +34,12 @@ import org.jgroups.protocols.Discovery;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
+import org.w3c.dom.Node;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.Request;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.handlers.RequestHandler;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
@@ -43,6 +48,8 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.transform.Unmarshaller;
+import com.amazonaws.util.TimingInfo;
 
 /**
  * <p>
@@ -156,6 +163,8 @@ public class AWS_PING extends Discovery {
   private int port_range = 50;
   @Property(description = "The port number being used for cluster membership.  The default is 7800.")
   private int port_number = 7800;
+  @Property(description = "Turns on AWS error message logging.")
+  private boolean log_aws_error_messages = false;
 
   /**
    * The id of the current instance. This is looked up from the instance
@@ -240,6 +249,38 @@ public class AWS_PING extends Discovery {
       ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
     }
     ec2.setEndpoint(endpoint);
+    
+    //Lets do some good old reflection work to add a unmarshaller to the AmazonEC2Client just to log the exceptions from soap.
+    if(log_aws_error_messages) {
+      setupAWSExceptionLogging();
+    }
+  }
+
+  /**
+   * Sets up the AmazonEC2Client to log soap faults from the AWS EC2 api server.
+   */
+  private void setupAWSExceptionLogging() {
+    boolean accessible = false;
+    Field exceptionUnmarshallersField = null;
+    try {
+      exceptionUnmarshallersField = AmazonEC2Client.class.getDeclaredField("exceptionUnmarshallers");
+      accessible = exceptionUnmarshallersField.isAccessible();
+      exceptionUnmarshallersField.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      List<Unmarshaller<AmazonServiceException, Node>> exceptionUnmarshallers = (List<Unmarshaller<AmazonServiceException, Node>>)exceptionUnmarshallersField.get(ec2);
+      exceptionUnmarshallers.add(0, new AWSFaultLogger());
+      ((AmazonEC2Client)ec2).addRequestHandler((RequestHandler) exceptionUnmarshallers.get(0));
+    } catch(Throwable t) {
+      //I don't care about this.
+    } finally {
+      if(exceptionUnmarshallersField != null) {
+        try {
+          exceptionUnmarshallersField.setAccessible(accessible);
+        } catch(SecurityException se){
+          //I don't care about this.
+        }
+      }
+    }
   }
 
   /**
@@ -453,5 +494,49 @@ public class AWS_PING extends Discovery {
       }
     }
     return tags;
+  }
+  
+  /**
+   * This class will log the request along with the response from the AWS ec2 service on fault only.
+   * 
+   * @author John McEntire
+   *
+   */
+  private class AWSFaultLogger implements Unmarshaller<AmazonServiceException, Node>, RequestHandler {
+    private final ThreadLocal<Request<?>> request = new ThreadLocal<Request<?>>();
+    
+    @Override
+    public AmazonServiceException unmarshall(Node node) throws Exception {
+      try {
+        javax.xml.transform.TransformerFactory tfactory = javax.xml.transform.TransformerFactory.newInstance();
+        javax.xml.transform.Transformer xform = tfactory.newTransformer();
+        
+        javax.xml.transform.Source src = new javax.xml.transform.dom.DOMSource(node);
+        java.io.StringWriter writer = new java.io.StringWriter();
+        javax.xml.transform.Result result = new javax.xml.transform.stream.StreamResult(writer);
+        xform.transform(src, result);
+        log.error("AWS Exception: [" + writer.toString()+"] For request ["+request.get()+"]");
+      } catch(Throwable t) {
+        log.debug("Failed to log xml soap fault message.", t);
+      } finally {
+        request.remove();
+      }
+      return null;
+    }
+
+    @Override
+    public void afterError(Request<?> request, Exception e) {
+      this.request.remove();
+    }
+
+    @Override
+    public void afterResponse(Request<?> request, Object obj, TimingInfo timing) {
+      this.request.remove();
+    }
+
+    @Override
+    public void beforeRequest(Request<?> request) {
+      this.request.set(request);
+    }
   }
 }

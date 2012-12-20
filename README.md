@@ -84,4 +84,10 @@ tags, access_key and secret_key attributes.  Remove the filters attribute.  Then
 mvn exec:java -Dexec.mainClass="org.jgroups.demos.Chat" -Dexec.args="-props conf/aws-ping.xml"
 ```
 
+Request timeout bug
+-------------------
+If you are seeing the following error in you logs. You may wish to upgrade to the 1.2.0 version, as this seems to fix the problem:
+```
+Status Code: 400, AWS Service: AmazonEC2, AWS Request ID: 6ec551f5-7f56-493f-a213-b8c5cb3e856d, AWS Error Code: RequestExpired, AWS Error Message: Request has expired.
+```
 

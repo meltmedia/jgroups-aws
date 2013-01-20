@@ -149,6 +149,9 @@ public class AWS_PING extends Discovery {
                                                                 // be unique
   }
 
+  @Property(description = "The AWS Credentials Chain Class to use when searching for the account .")
+  protected String credentials_provider_class = com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName();
+
   @Property(description = "The AWS Access Key for the account to search.")
   protected String access_key;
   @Property(description = "The AWS Secret Key for the account to search.")
@@ -243,7 +246,7 @@ public class AWS_PING extends Discovery {
 
     // start up a new ec2 client with the region specific endpoint.
     if( access_key == null && secret_key == null ) {
-      ec2 = new AmazonEC2Client();
+      ec2 = new AmazonEC2Client((com.amazonaws.auth.AWSCredentialsProvider) Class.forName(credentials_provider_class).newInstance());
     }
     else {
       ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));

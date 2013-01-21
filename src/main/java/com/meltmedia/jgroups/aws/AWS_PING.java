@@ -30,14 +30,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jgroups.PhysicalAddress;
-import org.jgroups.protocols.Discovery;
-import org.jgroups.stack.IpAddress;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.protocols.Discovery;
+import org.jgroups.stack.IpAddress;
+import org.jgroups.util.Util;
 import org.w3c.dom.Node;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.Request;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.handlers.RequestHandler;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -149,6 +151,8 @@ public class AWS_PING extends Discovery {
                                                                 // be unique
   }
 
+  @Property(description = "The AWS Credentials Chain Class to use when searching for the account.")
+  protected String credentials_provider_class = com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName();
   @Property(description = "The AWS Access Key for the account to search.")
   protected String access_key;
   @Property(description = "The AWS Secret Key for the account to search.")
@@ -243,7 +247,10 @@ public class AWS_PING extends Discovery {
 
     // start up a new ec2 client with the region specific endpoint.
     if( access_key == null && secret_key == null ) {
-      ec2 = new AmazonEC2Client();
+      Class<?> credsProviderClazz = Util.loadClass(credentials_provider_class, null);
+      AWSCredentialsProvider awsCredentialsProvider = (AWSCredentialsProvider) credsProviderClazz.newInstance();
+
+      ec2 = new AmazonEC2Client(awsCredentialsProvider);
     }
     else {
       ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));

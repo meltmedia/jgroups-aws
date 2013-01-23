@@ -247,8 +247,23 @@ public class AWS_PING extends Discovery {
 
     // start up a new ec2 client with the region specific endpoint.
     if( access_key == null && secret_key == null ) {
-      Class<?> credsProviderClazz = Util.loadClass(credentials_provider_class, null);
-      AWSCredentialsProvider awsCredentialsProvider = (AWSCredentialsProvider) credsProviderClazz.newInstance();
+      Class<?> credsProviderClazz = null;
+      try {
+        credsProviderClazz = Util.loadClass(credentials_provider_class, getClass());
+      }
+      catch( ClassNotFoundException e ) {
+        throw new Exception("unable to load credentials provider class " + credentials_provider_class);
+      }
+
+      AWSCredentialsProvider awsCredentialsProvider = null;
+      try {
+        awsCredentialsProvider = (AWSCredentialsProvider) credsProviderClazz.newInstance();
+      }
+      catch( InstantiationException e ) {
+        log.error("an instance of " + credentials_provider_class + " could not be created. Please check that it implements" +
+                  " interface AWSCredentialsProvider and that is has a public empty constructor !");
+        throw e;
+      }
 
       ec2 = new AmazonEC2Client(awsCredentialsProvider);
     }

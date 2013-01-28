@@ -13,7 +13,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.1.0</version>
+      <version>1.3.0</version>
     </dependency>
 
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
@@ -41,6 +41,8 @@ cluster members.
 All filters must match a node for it to be a cluster member.
 * access_key and secret_key - the access key and secret key for an AWS user with permission to the "ec2:Describe*" action.  If both
 of these attributes are not specified, then the instance profile for the EC2 instance will be used (Since version 1.1).
+* credentials_provider_class - the fully qualified name of the com.amazonaws.auth.AWSCredentialsProvider to use (Since version 1.3).  This option can
+only be used when the access_key and secret_key options are not provided.
 
 Setting Up EC2
 --------------

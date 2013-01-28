@@ -30,6 +30,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jgroups.PhysicalAddress;
+import org.jgroups.logging.Log;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.Discovery;
@@ -247,24 +248,7 @@ public class AWS_PING extends Discovery {
 
     // start up a new ec2 client with the region specific endpoint.
     if( access_key == null && secret_key == null ) {
-      Class<?> credsProviderClazz = null;
-      try {
-        credsProviderClazz = Util.loadClass(credentials_provider_class, getClass());
-      }
-      catch( ClassNotFoundException e ) {
-        throw new Exception("unable to load credentials provider class " + credentials_provider_class);
-      }
-
-      AWSCredentialsProvider awsCredentialsProvider = null;
-      try {
-        awsCredentialsProvider = (AWSCredentialsProvider) credsProviderClazz.newInstance();
-      }
-      catch( InstantiationException e ) {
-        log.error("an instance of " + credentials_provider_class + " could not be created. Please check that it implements" +
-                  " interface AWSCredentialsProvider and that is has a public empty constructor !");
-        throw e;
-      }
-
+      AWSCredentialsProvider awsCredentialsProvider = loadCredentialsProvider(credentials_provider_class, getClass(), log);
       ec2 = new AmazonEC2Client(awsCredentialsProvider);
     }
     else {
@@ -560,5 +544,31 @@ public class AWS_PING extends Discovery {
     public void beforeRequest(Request<?> request) {
       this.request.set(request);
     }
+  }
+  
+  /**
+   * Loads a new instance of the credential provider, using the same class loading rules from org.jgroups.Util.loadClass(String, Class).
+   */
+  static AWSCredentialsProvider loadCredentialsProvider( String credentialProviderClass, Class<?> jgroupsClass, Log log )
+    throws Exception
+  {
+    Class<?> credsProviderClazz = null;
+    try {
+      credsProviderClazz = Util.loadClass(credentialProviderClass, jgroupsClass);
+    }
+    catch( ClassNotFoundException e ) {
+      throw new Exception("unable to load credentials provider class " + credentialProviderClass);
+    }
+
+    AWSCredentialsProvider awsCredentialsProvider = null;
+    try {
+      awsCredentialsProvider = (AWSCredentialsProvider) credsProviderClazz.newInstance();
+    }
+    catch( InstantiationException e ) {
+      log.error("an instance of " + credentialProviderClass + " could not be created. Please check that it implements" +
+                " interface AWSCredentialsProvider and that is has a public empty constructor !");
+      throw e;
+    }
+    return awsCredentialsProvider;
   }
 }

@@ -69,7 +69,7 @@ public class LoadCredentialsProviderTest {
     catch( InstantiationException ie ) {
       // make sure that we notified the log.
       verify(contextClassLoader).loadClass(BadConstructorAWSCredentialsProvider.class.getName());
-     verify(log).error(anyString());
+      verify(log).error(anyString());
     }
   }
   

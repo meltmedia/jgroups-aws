@@ -439,7 +439,7 @@ public class AWS_PING extends Discovery {
 
       // create the filter and add it to the list.
       awsFilters.add(new Filter().withName(keyValues[0]).withValues(
-          keyValues[1].split("\\s*,\\s")));
+          keyValues[1].split("\\s*,\\s*")));
     }
     return awsFilters;
   }

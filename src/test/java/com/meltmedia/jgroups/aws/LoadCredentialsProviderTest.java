@@ -2,8 +2,14 @@ package com.meltmedia.jgroups.aws;
 
 import static org.junit.Assert.*;
 
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
+
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.jgroups.logging.Log;
 
 import com.amazonaws.auth.AWSCredentials;
@@ -25,9 +31,9 @@ public class LoadCredentialsProviderTest {
     Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
-    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class);
-    when((Class<UnsupportedAWSCredentialProvider>)contextClassLoader.loadClass(UnsupportedAWSCredentialProvider.class.getName())).thenReturn(UnsupportedAWSCredentialProvider.class);
-    when(contextClassLoader.loadClass(anyString())).thenThrow(new ClassNotFoundException("Not found in context class loader."));
+    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
+    when((Class<UnsupportedAWSCredentialProvider>)contextClassLoader.loadClass(UnsupportedAWSCredentialProvider.class.getName()))
+      .thenReturn(UnsupportedAWSCredentialProvider.class);
 
     try {
       doCall(contextClassLoader, "com.meltmedia.jgroups.aws.NotFoundCredentialProvider", jgroupsClass, log);
@@ -44,9 +50,9 @@ public class LoadCredentialsProviderTest {
     Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
-    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class);
-    when((Class<UnsupportedAWSCredentialProvider>)contextClassLoader.loadClass(UnsupportedAWSCredentialProvider.class.getName())).thenReturn(UnsupportedAWSCredentialProvider.class);
-    when(contextClassLoader.loadClass(anyString())).thenThrow(new ClassNotFoundException("Not found in context class loader."));
+    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
+    when((Class<UnsupportedAWSCredentialProvider>)contextClassLoader.loadClass(UnsupportedAWSCredentialProvider.class.getName()))
+      .thenReturn(UnsupportedAWSCredentialProvider.class);
 
     doCall(contextClassLoader, UnsupportedAWSCredentialProvider.class.getName(), jgroupsClass, log);
     verify(contextClassLoader).loadClass(UnsupportedAWSCredentialProvider.class.getName());
@@ -58,9 +64,9 @@ public class LoadCredentialsProviderTest {
     Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
-    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class);
-    when((Class<BadConstructorAWSCredentialsProvider>)contextClassLoader.loadClass(BadConstructorAWSCredentialsProvider.class.getName())).thenReturn(BadConstructorAWSCredentialsProvider.class);
-    when(contextClassLoader.loadClass(anyString())).thenThrow(new ClassNotFoundException("Not found in context class loader."));
+    ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
+    when((Class<BadConstructorAWSCredentialsProvider>)contextClassLoader.loadClass(BadConstructorAWSCredentialsProvider.class.getName()))
+      .thenReturn(BadConstructorAWSCredentialsProvider.class);
 
     try {
       doCall(contextClassLoader, BadConstructorAWSCredentialsProvider.class.getName(), jgroupsClass, log);
@@ -80,6 +86,15 @@ public class LoadCredentialsProviderTest {
     Log log = Mockito.mock(Log.class);
     
     doCall(null, com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName(), jgroupsClass, log);
+  }
+  
+  public static Answer<Object> answerWith(final Object o) {
+    return new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        return invocation.getMethod().invoke(o, invocation.getArguments());
+      }
+    };
   }
   
   /**

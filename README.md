@@ -83,7 +83,7 @@ mvn clean install
 Finally, it is time to run the project.  You will need to edit the configuration in conf/aws_ping.xml.  Add values for the
 tags, access_key and secret_key attributes.  Remove the filters attribute.  Then execute the following:
 ```
-mvn exec:java -Dexec.mainClass="org.jgroups.demos.Chat" -Dexec.args="-props conf/aws_ping.xml"
+mvn exec:java -Dexec.mainClass="org.jgroups.demos.Chat" -Dexec.args="-props conf/aws_ping.xml" -Djava.net.preferIPv4Stack=true
 ```
 
 Request timeout bug

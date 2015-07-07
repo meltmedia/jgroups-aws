@@ -86,8 +86,6 @@ import com.amazonaws.util.TimingInfo;
  * </pre>
  * </blockquote>
  *
- * </p>
- *
  * <h3>EC2 Filters</h3>
  * <p>
  * To use EC2's filtering feature to discover nodes, specify the filters attribute.  The format for this attribute is:

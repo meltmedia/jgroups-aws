@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2015-07-07T23:11:02.441">
+<pmd version="4.3" timestamp="2015-07-07T23:56:40.561">
 <file name="/Users/ossrelease/git/jgroups-aws/target/checkout/src/main/java/com/meltmedia/jgroups/aws/AWS_PING.java">
 <violation beginline="277" endline="279" begincolumn="7" endcolumn="5" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING" method="setupAWSExceptionLogging" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks

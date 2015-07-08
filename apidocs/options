@@ -1,5 +1,5 @@
 -classpath
-'/Users/ossrelease/git/jgroups-aws/target/checkout/target/classes:/Users/ossrelease/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.8.9/jackson-mapper-asl-1.8.9.jar:/Users/ossrelease/.m2/repository/org/apache/httpcomponents/httpclient/4.1/httpclient-4.1.jar:/Users/ossrelease/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/ossrelease/.m2/repository/org/apache/httpcomponents/httpcore/4.1/httpcore-4.1.jar:/Users/ossrelease/.m2/repository/org/jgroups/jgroups/3.1.0.Final/jgroups-3.1.0.Final.jar:/Users/ossrelease/.m2/repository/com/amazonaws/aws-java-sdk/1.3.26/aws-java-sdk-1.3.26.jar:/Users/ossrelease/.m2/repository/org/slf4j/slf4j-api/1.5.2/slf4j-api-1.5.2.jar:/Users/ossrelease/.m2/repository/org/slf4j/slf4j-simple/1.5.2/slf4j-simple-1.5.2.jar:/Users/ossrelease/.m2/repository/commons-codec/commons-codec/1.3/commons-codec-1.3.jar:/Users/ossrelease/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.8.9/jackson-core-asl-1.8.9.jar'
+'/Users/ossrelease/git/jgroups-aws/target/checkout/target/classes:/Users/ossrelease/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/ossrelease/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.8.9/jackson-core-asl-1.8.9.jar:/Users/ossrelease/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.8.9/jackson-mapper-asl-1.8.9.jar:/Users/ossrelease/.m2/repository/org/jgroups/jgroups/3.1.0.Final/jgroups-3.1.0.Final.jar:/Users/ossrelease/.m2/repository/org/apache/httpcomponents/httpcore/4.1/httpcore-4.1.jar:/Users/ossrelease/.m2/repository/commons-codec/commons-codec/1.3/commons-codec-1.3.jar:/Users/ossrelease/.m2/repository/org/apache/httpcomponents/httpclient/4.1/httpclient-4.1.jar:/Users/ossrelease/.m2/repository/org/slf4j/slf4j-api/1.5.2/slf4j-api-1.5.2.jar:/Users/ossrelease/.m2/repository/com/amazonaws/aws-java-sdk/1.3.26/aws-java-sdk-1.3.26.jar'
 -encoding
 'UTF-8'
 -protected
@@ -7,7 +7,7 @@
 '/Users/ossrelease/git/jgroups-aws/target/checkout/src/main/java'
 -author
 -bottom
-'Copyright &#169; 2013 <a href="http://www.meltmedia.com/">meltmedia</a>. All Rights Reserved.'
+'Copyright &#169; 2015 <a href="http://www.meltmedia.com/">meltmedia</a>. All Rights Reserved.'
 -charset
 'UTF-8'
 -d
@@ -16,8 +16,8 @@
 'UTF-8'
 -docfilessubdirs
 -doctitle
-'JGroups AWS Discovery 1.3.0 API'
+'JGroups AWS Discovery 1.4.0-SNAPSHOT API'
 -use
 -version
 -windowtitle
-'JGroups AWS Discovery 1.3.0 API'
+'JGroups AWS Discovery 1.4.0-SNAPSHOT API'

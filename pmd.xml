@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2013-01-28T14:20:52.237">
+<pmd version="4.3" timestamp="2015-07-07T23:11:02.441">
 <file name="/Users/ossrelease/git/jgroups-aws/target/checkout/src/main/java/com/meltmedia/jgroups/aws/AWS_PING.java">
-<violation beginline="279" endline="281" begincolumn="7" endcolumn="5" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING" method="setupAWSExceptionLogging" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="277" endline="279" begincolumn="7" endcolumn="5" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING" method="setupAWSExceptionLogging" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="285" endline="287" begincolumn="11" endcolumn="9" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING" method="setupAWSExceptionLogging" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="283" endline="285" begincolumn="11" endcolumn="9" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING" method="setupAWSExceptionLogging" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="520" endline="520" begincolumn="46" endcolumn="78" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
+<violation beginline="518" endline="518" begincolumn="46" endcolumn="78" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
 Avoid using java.lang.ThreadGroup; it is not thread safe
 </violation>
-<violation beginline="521" endline="521" begincolumn="43" endcolumn="62" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
+<violation beginline="519" endline="519" begincolumn="43" endcolumn="62" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
 Avoid using java.lang.ThreadGroup; it is not thread safe
 </violation>
-<violation beginline="522" endline="522" begincolumn="49" endcolumn="87" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
+<violation beginline="520" endline="520" begincolumn="49" endcolumn="87" rule="AvoidThreadGroup" ruleset="Basic Rules" package="com.meltmedia.jgroups.aws" class="AWS_PING$AWSFaultLogger" method="unmarshall" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#AvoidThreadGroup" priority="3">
 Avoid using java.lang.ThreadGroup; it is not thread safe
 </violation>
 </file>

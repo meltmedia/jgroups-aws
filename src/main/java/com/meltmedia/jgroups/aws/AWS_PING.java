@@ -29,12 +29,19 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.jgroups.Address;
+import org.jgroups.Event;
+import org.jgroups.Message;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.logging.Log;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.Discovery;
+import org.jgroups.protocols.PingData;
+import org.jgroups.protocols.PingHeader;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.Responses;
+import org.jgroups.util.UUID;
 import org.jgroups.util.Util;
 import org.w3c.dom.Node;
 
@@ -74,7 +81,7 @@ import com.amazonaws.util.TimingInfo;
  * To use the tag matching feature, use the tags attribute to specify a comma delimited list of tags.  All of the nodes
  * with matching values for these tags will be discovered.
  * </p>
- * 
+ *
  * <blockquote>
  * <pre>
  * &lt;com.meltmedia.jgroups.aws.AWS_PING
@@ -133,10 +140,10 @@ import com.amazonaws.util.TimingInfo;
  *   <li><a href="http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeInstances.html">EC2 Describe Instances</a></li>
  *   <li><a href="http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html">EC2 Instance Metadata</a></li>
  * </ul>
- * 
+ *
  * @author Christian Trimble
  * @author John McEntire
- * 
+ *
  */
 public class AWS_PING extends Discovery {
   private static String INSTANCE_METADATA_BASE_URI = "http://169.254.169.254/latest/meta-data/";
@@ -253,7 +260,7 @@ public class AWS_PING extends Discovery {
       ec2 = new AmazonEC2Client(new BasicAWSCredentials(access_key, secret_key));
     }
     ec2.setEndpoint(endpoint);
-    
+
     //Lets do some good old reflection work to add a unmarshaller to the AmazonEC2Client just to log the exceptions from soap.
     if(log_aws_error_messages) {
       setupAWSExceptionLogging();
@@ -305,28 +312,54 @@ public class AWS_PING extends Discovery {
    * addresses are the private ip addresses of the matching nodes. The port
    * numbers of the addresses are set to the port number plus all the ports in
    * the range after that specified on this protocol.
-   * 
-   * @return the cluster members.
+   *
+   * @param members
+   * @param initial_discovery
+   * @param responses
    */
-  public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
+  @Override
+  protected void findMembers(List<Address> members, boolean initial_discovery, Responses responses) {
+    PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
+
+    PingData data = new PingData(local_addr, false, UUID.get(local_addr), physical_addr);
+    PingHeader hdr = new PingHeader(PingHeader.GET_MBRS_REQ).clusterName(cluster_name);
+
     List<PhysicalAddress> clusterMembers = new ArrayList<PhysicalAddress>();
     for (String privateIpAddress : getPrivateIpAddresses()) {
       for (int i = port_number; i < port_number + port_range; i++) {
         try {
           clusterMembers.add(new IpAddress(privateIpAddress, i));
         } catch (UnknownHostException e) {
-          log.warn("Could not create an IpAddress for " + privateIpAddress
-              + ":" + i);
+          log.warn("Could not create an IpAddress for " + privateIpAddress + ":" + i);
         }
       }
     }
-    return clusterMembers;
+
+    for (final PhysicalAddress addr : clusterMembers) {
+      if (physical_addr != null && addr.equals(physical_addr))
+        continue;
+
+      final Message msg = new Message(addr).setFlag(Message.Flag.INTERNAL, Message.Flag.DONT_BUNDLE, Message.Flag.OOB)
+          .putHeader(this.id, hdr).setBuffer(marshal(data));
+
+      if (async_discovery_use_separate_thread_per_request) {
+        timer.execute(new Runnable() {
+          public void run() {
+            log.trace("%s: sending discovery request to %s", local_addr, msg.getDest());
+            down_prot.down(new Event(Event.MSG, msg));
+          }
+        });
+      } else {
+        log.trace("%s: sending discovery request to %s", local_addr, msg.getDest());
+        down_prot.down(new Event(Event.MSG, msg));
+      }
+    }
   }
 
   /**
    * Gets the list of private IP addresses found in AWS based on the filters and
    * tag names defined.
-   * 
+   *
    * @return the list of private IP addresses found on AWS.
    */
   protected List<String> getPrivateIpAddresses() {
@@ -373,21 +406,11 @@ public class AWS_PING extends Discovery {
 
   /**
    * Returns true.
-   * 
+   *
    * @return true
    */
   @Override
   public boolean isDynamic() {
-    return true;
-  }
-
-  /**
-   * Returns true.
-   * 
-   * @return true
-   */
-  @Override
-  public boolean sendDiscoveryRequestsInParallel() {
     return true;
   }
 
@@ -402,19 +425,19 @@ public class AWS_PING extends Discovery {
   /**
    * Parses a filter string into a list of Filter objects that is suitable for
    * the AWS describeInstances method call.
-   * 
+   *
    * <h3>Format:</h3>
    * <p>
    * <blockquote>
-   * 
+   *
    * <pre>
    *   FILTERS ::= &lt;FILTER&gt; ( ';' &lt;FILTER&gt; )*
    *   FILTER ::= &lt;NAME&gt; '=' &lt;VALUE&gt; (',' &lt;VALUE&gt;)*
    * </pre>
-   * 
+   *
    * </blockquote>
    * </p>
-   * 
+   *
    * @param filters
    *          the filter string to parse.
    * @return the list of filters that represent the filter string.
@@ -444,7 +467,7 @@ public class AWS_PING extends Discovery {
 
   /**
    * Parses a comma separated list of tag names.
-   * 
+   *
    * @param tagNames
    *          a comma separated list of tag names.
    * @return the list of tag names.
@@ -455,7 +478,7 @@ public class AWS_PING extends Discovery {
 
   /**
    * Gets the body of the content returned from a GET request to uri.
-   * 
+   *
    * @param client
    *          the HttpClient instance to use for the request.
    * @param uri
@@ -477,7 +500,7 @@ public class AWS_PING extends Discovery {
   /**
    * Returns all of the tags defined on the EC2 instance with the specified
    * instanceId.
-   * 
+   *
    * @param ec2
    *          the client to use when accessing Amazon.
    * @param instanceId
@@ -499,22 +522,22 @@ public class AWS_PING extends Discovery {
     }
     return tags;
   }
-  
+
   /**
    * This class will log the request along with the response from the AWS ec2 service on fault only.
-   * 
+   *
    * @author John McEntire
    *
    */
   private class AWSFaultLogger implements Unmarshaller<AmazonServiceException, Node>, RequestHandler {
     private final ThreadLocal<Request<?>> request = new ThreadLocal<Request<?>>();
-    
+
     @Override
     public AmazonServiceException unmarshall(Node node) throws Exception {
       try {
         javax.xml.transform.TransformerFactory tfactory = javax.xml.transform.TransformerFactory.newInstance();
         javax.xml.transform.Transformer xform = tfactory.newTransformer();
-        
+
         javax.xml.transform.Source src = new javax.xml.transform.dom.DOMSource(node);
         java.io.StringWriter writer = new java.io.StringWriter();
         javax.xml.transform.Result result = new javax.xml.transform.stream.StreamResult(writer);
@@ -543,7 +566,7 @@ public class AWS_PING extends Discovery {
       this.request.set(request);
     }
   }
-  
+
   /**
    * Loads a new instance of the credential provider, using the same class loading rules from org.jgroups.Util.loadClass(String, Class).
    */

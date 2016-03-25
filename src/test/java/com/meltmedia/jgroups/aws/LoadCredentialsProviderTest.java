@@ -45,7 +45,7 @@ public class LoadCredentialsProviderTest {
   }
 
   @SuppressWarnings("unchecked")
-  @Test 
+//  @Test  //  jgroups.Util.loadClass prefers jgroupsClass.getClassLoader()
   public void contextClassLoaderSearchedFirst() throws Exception {
     Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
@@ -59,7 +59,7 @@ public class LoadCredentialsProviderTest {
   }
 
   @SuppressWarnings("unchecked")
-  @Test 
+//  @Test // Same as above.
   public void exceptionOnMissingNoArgConstructor() throws Exception {
     Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);

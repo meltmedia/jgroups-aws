@@ -39,7 +39,7 @@
     <dependency>
       <groupId>org.jgroups</groupId>
       <artifactId>jgroups</artifactId>
-      <version>3.6.6.Final</version>
+      <version>3.6.8.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>bsh</artifactId>

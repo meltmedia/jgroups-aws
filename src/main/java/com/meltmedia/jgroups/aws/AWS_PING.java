@@ -326,7 +326,7 @@ public class AWS_PING extends Discovery {
 
     List<PhysicalAddress> clusterMembers = new ArrayList<PhysicalAddress>();
     for (String privateIpAddress : getPrivateIpAddresses()) {
-      for (int i = port_number; i < port_number + port_range; i++) {
+      for (int i = port_number; i <= port_number + port_range; i++) {
         try {
           clusterMembers.add(new IpAddress(privateIpAddress, i));
         } catch (UnknownHostException e) {

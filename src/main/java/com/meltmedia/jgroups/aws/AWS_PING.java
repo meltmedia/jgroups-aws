@@ -170,9 +170,9 @@ public class AWS_PING extends Discovery {
   @Property(description = "Number of additional ports to be probed for membership. A port_range of 0 does not "
       + "probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes "
       + "A:7800 and A:7801")
-  private int port_range = 50;
+  protected int port_range = 0;
   @Property(description = "The port number being used for cluster membership.  The default is 7800.")
-  private int port_number = 7800;
+  protected int port_number = 7800;
   @Property(description = "Turns on AWS error message logging.")
   private boolean log_aws_error_messages = false;
 
@@ -324,16 +324,8 @@ public class AWS_PING extends Discovery {
     PingData data = new PingData(local_addr, false, UUID.get(local_addr), physical_addr);
     PingHeader hdr = new PingHeader(PingHeader.GET_MBRS_REQ).clusterName(cluster_name);
 
-    List<PhysicalAddress> clusterMembers = new ArrayList<PhysicalAddress>();
-    for (String privateIpAddress : getPrivateIpAddresses()) {
-      for (int i = port_number; i <= port_number + port_range; i++) {
-        try {
-          clusterMembers.add(new IpAddress(privateIpAddress, i));
-        } catch (UnknownHostException e) {
-          log.warn("Could not create an IpAddress for " + privateIpAddress + ":" + i);
-        }
-      }
-    }
+    List<PhysicalAddress> clusterMembers =
+      expandClusterMemberPorts(getPrivateIpAddresses());
 
     for (final PhysicalAddress addr : clusterMembers) {
       if (physical_addr != null && addr.equals(physical_addr))
@@ -354,6 +346,20 @@ public class AWS_PING extends Discovery {
         down_prot.down(new Event(Event.MSG, msg));
       }
     }
+  }
+  
+  protected List<PhysicalAddress> expandClusterMemberPorts( List<String> privateIpAddresses) {
+    List<PhysicalAddress> clusterMembers = new ArrayList<PhysicalAddress>();
+    for (String privateIpAddress : privateIpAddresses) {
+      for (int i = port_number; i <= port_number + port_range; i++) {
+        try {
+          clusterMembers.add(new IpAddress(privateIpAddress, i));
+        } catch (UnknownHostException e) {
+          log.warn("Could not create an IpAddress for " + privateIpAddress + ":" + i);
+        }
+      }
+    }
+    return clusterMembers;
   }
 
   /**

@@ -9,14 +9,17 @@ file.
 Usage
 -----
 To use AWS auto discovery, you need to add a dependency to this package in your pom:
+
 ```
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.3.1</version>
+      <version>1.5.0</version>
     </dependency>
 ```
+
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
+
 ```
     <com.meltmedia.jgroups.aws.AWS_PING
          timeout="3000"
@@ -26,6 +29,7 @@ and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
          access_key="AWS_ACCESS_KEY"
          secret_key="AWS_SECRET_KEY"/>
 ```
+
 see the configuration section for information.  You can find an example stack in conf/aws_ping.xml.
 
 This implementation will only work from inside EC2, since it uses environment information to auto wire itself.  See the
@@ -35,6 +39,7 @@ Configuration Options
 ---------------------
 * timeout - the timeout in milliseconds
 * port_number - the port number that the nodes will communicate over.  This needs to be the same on all nodes.  The default is 7800.
+* port_range - the number of additional ports to be probed for membership. A port_range of 0 does not probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes A:7800 and A:7801.  The default is 0 in versions 1.5+, was 50 previously.
 * tags - A comma delimited list of EC2 node tag names.  The current nodes values are matched against other nodes to find
 cluster members.
 * filters - A colon delimited list of filters.  Each filter defines a name and a comma delimited list of possible values.
@@ -61,6 +66,7 @@ Setting up JGroups Chat Demo
 The JGroups project provides a chat application that is great for testing your configuration.  To set up the chat application,
 first create two EC2 nodes, following the Setting Up EC2 instructions.  Once the nodes are created, SSH into each machine and
 install the java 6 JDK, Maven 3, and Git.
+
 ```
 sudo apt-get install openjdk-6-jdk
 wget http://www.carfab.com/apachesoftware/maven/binaries/apache-maven-3.0.4-bin.tar.gz
@@ -71,17 +77,21 @@ echo "export PATH=/opt/maven/bin:$PATH" >> .profile
 sudo apt-get install git
 mkdir ~/git
 ```
+
 Now your machine is ready to compile maven projects.
 
 Next, clone and build this project.
+
 ```
 cd ~/git
 git clone git://github.com/meltmedia/jgroups-aws.git
 cd jgroups-aws
 mvn clean install
 ```
+
 Finally, it is time to run the project.  You will need to edit the configuration in conf/aws_ping.xml.  Add values for the
 tags, access_key and secret_key attributes.  Remove the filters attribute.  Then execute the following:
+
 ```
 mvn exec:java -Dexec.mainClass="org.jgroups.demos.Chat" -Dexec.args="-props conf/aws_ping.xml" -Djava.net.preferIPv4Stack=true
 ```
@@ -89,6 +99,7 @@ mvn exec:java -Dexec.mainClass="org.jgroups.demos.Chat" -Dexec.args="-props conf
 Request timeout bug
 -------------------
 If you are seeing the following error in you logs. You may wish to upgrade to the 1.2.0 version, as this seems to fix the problem:
+
 ```
 Status Code: 400, AWS Service: AmazonEC2, AWS Request ID: 6ec551f5-7f56-493f-a213-b8c5cb3e856d, AWS Error Code: RequestExpired, AWS Error Message: Request has expired.
 ```

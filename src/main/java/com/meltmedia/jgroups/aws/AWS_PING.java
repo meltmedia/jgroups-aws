@@ -169,8 +169,8 @@ public class AWS_PING extends Discovery {
   protected String tags;
   @Property(description = "Number of additional ports to be probed for membership. A port_range of 0 does not "
       + "probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes "
-      + "A:7800 and A:7801")
-  protected int port_range = 0;
+      + "A:7800 and A:7801.  The default is 50.")
+  protected int port_range = 50;
   @Property(description = "The port number being used for cluster membership.  The default is 7800.")
   protected int port_number = 7800;
   @Property(description = "Turns on AWS error message logging.")

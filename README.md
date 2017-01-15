@@ -14,7 +14,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.5.0</version>
+      <version>1.4.1</version>
     </dependency>
 ```
 
@@ -39,7 +39,7 @@ Configuration Options
 ---------------------
 * timeout - the timeout in milliseconds
 * port_number - the port number that the nodes will communicate over.  This needs to be the same on all nodes.  The default is 7800.
-* port_range - the number of additional ports to be probed for membership. A port_range of 0 does not probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes A:7800 and A:7801.  The default is 0 in versions 1.5+, was 50 previously.
+* port_range - the number of additional ports to be probed for membership. A port_range of 0 does not probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes A:7800 and A:7801.  The default is 50.
 * tags - A comma delimited list of EC2 node tag names.  The current nodes values are matched against other nodes to find
 cluster members.
 * filters - A colon delimited list of filters.  Each filter defines a name and a comma delimited list of possible values.

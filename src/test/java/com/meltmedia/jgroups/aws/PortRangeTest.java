@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.stack.IpAddress;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class PortRangeTest {
       { 
         "default port and range",
         awsPingDefaultPortAndRange(),
-        matchClusterPorts(7800)
+        Matchers.hasSize(51)
       }
     });
   }

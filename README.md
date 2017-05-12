@@ -35,6 +35,24 @@ see the configuration section for information.  You can find an example stack in
 This implementation will only work from inside EC2, since it uses environment information to auto wire itself.  See the
 Setting Up EC2 section for more information.
 
+SNAPSHOTs of the project are located in the Sonatype Nexus Snapshots repository.  You can use SNAPSHOTs by adding the following repository to your project:
+
+```
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+```
+
+And then update your dependency to the current SNAPSHOT version.
+
 Configuration Options
 ---------------------
 * timeout - the timeout in milliseconds

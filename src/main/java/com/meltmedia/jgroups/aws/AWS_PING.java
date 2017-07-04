@@ -40,8 +40,8 @@ import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.PingData;
 import org.jgroups.protocols.PingHeader;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.NameCache;
 import org.jgroups.util.Responses;
-import org.jgroups.util.UUID;
 import org.jgroups.util.Util;
 import org.w3c.dom.Node;
 
@@ -320,8 +320,7 @@ public class AWS_PING extends Discovery {
   @Override
   protected void findMembers(List<Address> members, boolean initial_discovery, Responses responses) {
     PhysicalAddress physical_addr = (PhysicalAddress) down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
-
-    PingData data = new PingData(local_addr, false, UUID.get(local_addr), physical_addr);
+    PingData data = new PingData(local_addr, false, NameCache.get(local_addr), physical_addr);
     PingHeader hdr = new PingHeader(PingHeader.GET_MBRS_REQ).clusterName(cluster_name);
 
     List<PhysicalAddress> clusterMembers =
@@ -338,12 +337,12 @@ public class AWS_PING extends Discovery {
         timer.execute(new Runnable() {
           public void run() {
             log.trace("%s: sending discovery request to %s", local_addr, msg.getDest());
-            down_prot.down(new Event(Event.MSG, msg));
+            down_prot.down(msg);
           }
         });
       } else {
         log.trace("%s: sending discovery request to %s", local_addr, msg.getDest());
-        down_prot.down(new Event(Event.MSG, msg));
+        down_prot.down(msg);
       }
     }
   }

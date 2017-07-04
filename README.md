@@ -22,7 +22,6 @@ and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
 
 ```
     <com.meltmedia.jgroups.aws.AWS_PING
-         timeout="3000"
          port_number="7800"
          tags="TAG1,TAG2"
          filters="NAME1=VALUE1,VALUE2;NAME2=VALUE3"
@@ -55,7 +54,6 @@ And then update your dependency to the current SNAPSHOT version.
 
 Configuration Options
 ---------------------
-* timeout - the timeout in milliseconds
 * port_number - the port number that the nodes will communicate over.  This needs to be the same on all nodes.  The default is 7800.
 * port_range - the number of additional ports to be probed for membership. A port_range of 0 does not probe additional ports. Example: initial_hosts=A[7800] port_range=0 probes A:7800, port_range=1 probes A:7800 and A:7801.  The default is 50.
 * tags - A comma delimited list of EC2 node tag names.  The current nodes values are matched against other nodes to find

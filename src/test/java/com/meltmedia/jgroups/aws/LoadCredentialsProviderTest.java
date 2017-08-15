@@ -28,7 +28,6 @@ public class LoadCredentialsProviderTest {
   @SuppressWarnings("unchecked")
   @Test
   public void credentialProviderNotFound() throws Exception {
-    Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
     ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
@@ -36,7 +35,7 @@ public class LoadCredentialsProviderTest {
       .thenReturn(UnsupportedAWSCredentialProvider.class);
 
     try {
-      doCall(contextClassLoader, "com.meltmedia.jgroups.aws.NotFoundCredentialProvider", jgroupsClass, log);
+      doCall(contextClassLoader, "com.meltmedia.jgroups.aws.NotFoundCredentialProvider", log);
       fail("load credential provider succeeded for an undefined class.");
     }
     catch( Exception e ) {
@@ -47,21 +46,19 @@ public class LoadCredentialsProviderTest {
   @SuppressWarnings("unchecked")
 //  @Test  //  jgroups.Util.loadClass prefers jgroupsClass.getClassLoader()
   public void contextClassLoaderSearchedFirst() throws Exception {
-    Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
     ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
     when((Class<UnsupportedAWSCredentialProvider>)contextClassLoader.loadClass(UnsupportedAWSCredentialProvider.class.getName()))
       .thenReturn(UnsupportedAWSCredentialProvider.class);
 
-    doCall(contextClassLoader, UnsupportedAWSCredentialProvider.class.getName(), jgroupsClass, log);
+    doCall(contextClassLoader, UnsupportedAWSCredentialProvider.class.getName(), log);
     verify(contextClassLoader).loadClass(UnsupportedAWSCredentialProvider.class.getName());
   }
 
   @SuppressWarnings("unchecked")
 //  @Test // Same as above.
   public void exceptionOnMissingNoArgConstructor() throws Exception {
-    Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
 
     ClassLoader contextClassLoader = Mockito.mock(ClassLoader.class, answerWith(Thread.currentThread().getContextClassLoader()));
@@ -69,7 +66,7 @@ public class LoadCredentialsProviderTest {
       .thenReturn(BadConstructorAWSCredentialsProvider.class);
 
     try {
-      doCall(contextClassLoader, BadConstructorAWSCredentialsProvider.class.getName(), jgroupsClass, log);
+      doCall(contextClassLoader, BadConstructorAWSCredentialsProvider.class.getName(), log);
       fail("This credential provider should not have been constructed.");
     }
     catch( InstantiationException ie ) {
@@ -82,10 +79,9 @@ public class LoadCredentialsProviderTest {
   @SuppressWarnings("unchecked")
   @Test 
   public void noContextClassLoader() throws Exception {
-    Class<?> jgroupsClass = AWS_PING.class;
     Log log = Mockito.mock(Log.class);
     
-    doCall(null, com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName(), jgroupsClass, log);
+    doCall(null, com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName(), log);
   }
   
   public static Answer<Object> answerWith(final Object o) {
@@ -128,12 +124,12 @@ public class LoadCredentialsProviderTest {
     }  
   }
   
-  public static AWSCredentialsProvider doCall( ClassLoader contextClassLoader, String className, Class<?> jgroupsClass, Log log) throws Exception
+  public static AWSCredentialsProvider doCall( ClassLoader contextClassLoader, String className, Log log) throws Exception
   {
     ClassLoader oldCtx = Thread.currentThread().getContextClassLoader();
     try {
       Thread.currentThread().setContextClassLoader(contextClassLoader);
-      return AWS_PING.loadCredentialsProvider(className, jgroupsClass, log);
+      return new CredentialsProviderFactory(log).createCredentialsProvider(className);
     }
     finally {
       Thread.currentThread().setContextClassLoader(oldCtx);

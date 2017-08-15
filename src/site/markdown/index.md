@@ -19,7 +19,6 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
 and then replace TCPPING in your stack with com.meltmedia.jgroups.aws.AWS_PING:
 
     <com.meltmedia.jgroups.aws.AWS_PING
-         timeout="3000"
          port_number="7800"
          tags="TAG1,TAG2"
          filters="NAME1=VALUE1,VALUE2;NAME2=VALUE3"
@@ -33,7 +32,6 @@ Setting Up EC2 section for more information.
 
 Configuration Options
 ---------------------
-* timeout - the timeout in milliseconds
 * port_number - the port number that the nodes will communicate over.  This needs to be the same on all nodes.  The default is 7800.
 * tags - A comma delimited list of EC2 node tag names.  The current nodes values are matched against other nodes to find
 cluster members.
@@ -61,9 +59,9 @@ Setting up JGroups Chat Demo
 ----------------------------
 The JGroups project provides a chat application that is great for testing your configuration.  To set up the chat application,
 first create two EC2 nodes, following the Setting Up EC2 instructions.  Once the nodes are created, SSH into each machine and
-install the java 6 JDK, Maven 3, and Git.
+install the java 8 JDK, Maven 3, and Git.
 
-    sudo apt-get install openjdk-6-jdk
+    sudo apt-get install openjdk-8-jdk
     wget http://www.carfab.com/apachesoftware/maven/binaries/apache-maven-3.0.4-bin.tar.gz
     sudo tar xzf apache-maven-3.0.4-bin.tar.gz /opt
     ln -s /opt/maven /opt/apache-maven-3.0.4

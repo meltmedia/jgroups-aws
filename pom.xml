@@ -146,5 +146,30 @@
       </extension>
     </extensions>
   </build>
+  
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.8</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.9</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.0.1</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>analyze-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 
 </project>

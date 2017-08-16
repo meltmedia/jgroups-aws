@@ -226,10 +226,6 @@ public class AWS_PING extends Discovery {
    * addresses are the private ip addresses of the matching nodes. The port
    * numbers of the addresses are set to the port number plus all the ports in
    * the range after that specified on this protocol.
-   *
-   * @param members
-   * @param initial_discovery
-   * @param responses
    */
   @Override
   protected void findMembers(final List<Address> members, boolean initial_discovery, final Responses responses) {

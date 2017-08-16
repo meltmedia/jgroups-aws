@@ -35,7 +35,8 @@ public class FilterUtils {
    * Takes the list of configured tag names and compares it with tagsUtils on the ec2 instance.
    * FilterUtils (tag:key=value) will be created for all matches.
    *
-   * @return
+   * @return a list of filters for instances that share common tags with
+   *   this instance.
    */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public List<Filter> instanceTagNamesToFilters() {

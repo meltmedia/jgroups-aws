@@ -18,6 +18,11 @@ public class CredentialsProviderFactory {
 
   /**
    * Loads a new instance of the credential provider, using the same class loading rules from org.jgroups.Util.loadClass(String, Class).
+   * 
+   * @param credentialProviderClass the class name of the AWSCredentialsProvider to load.
+   * @return an instance of the credential provider
+   * @throws ClassNotFoundException if the implementation could not be found.
+   * @throws InstantiationException if the implementation does not have a no argument constructor.
    */
   public AWSCredentialsProvider createCredentialsProvider(final String credentialProviderClass) throws Exception {
     try {

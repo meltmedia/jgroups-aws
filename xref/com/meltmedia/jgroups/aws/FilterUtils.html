@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>FilterUtils xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../apidocs/com/meltmedia/jgroups/aws/FilterUtils.html">View Javadoc</a></div><pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> com.meltmedia.jgroups.aws;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <strong class="jxr_keyword">import</strong> com.amazonaws.services.ec2.model.Filter;
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <strong class="jxr_keyword">import</strong> org.jgroups.util.Tuple;
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">import</strong> java.util.Arrays;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <strong class="jxr_keyword">import</strong> java.util.Collections;
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <strong class="jxr_keyword">import</strong> java.util.Optional;
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Collectors;
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Stream;
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../com/meltmedia/jgroups/aws/FilterUtils.html">FilterUtils</a> {
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../com/meltmedia/jgroups/aws/TagsUtils.html">TagsUtils</a> tagsUtils;
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>    @SuppressWarnings(<span class="jxr_string">"OptionalUsedAsFieldOrParameterType"</span>)
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Optional&lt;List&lt;Filter&gt;&gt; awsFilters;
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>    @SuppressWarnings(<span class="jxr_string">"OptionalUsedAsFieldOrParameterType"</span>)
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>    <strong class="jxr_keyword">public</strong> <a href="../../../../com/meltmedia/jgroups/aws/FilterUtils.html">FilterUtils</a>(<strong class="jxr_keyword">final</strong> String configuredFilters, <strong class="jxr_keyword">final</strong> <a href="../../../../com/meltmedia/jgroups/aws/TagsUtils.html">TagsUtils</a> tagsUtils) {
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>      <strong class="jxr_keyword">this</strong>.tagsUtils = tagsUtils;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>      <strong class="jxr_keyword">this</strong>.awsFilters = Optional.ofNullable(configuredFilters)
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>          .map(String::trim)
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>          .filter(filters -&gt; !filters.isEmpty())
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>          .map(FilterUtils::parseFilters);
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>    }
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <em class="jxr_javadoccomment">   * @return an optional list of parsed tag names</em>
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>    <strong class="jxr_keyword">public</strong> Optional&lt;List&lt;Filter&gt;&gt; getAwsFilters() {
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>      <strong class="jxr_keyword">return</strong> awsFilters;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>    }
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment">   * Takes the list of configured tag names and compares it with tagsUtils on the ec2 instance.</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <em class="jxr_javadoccomment">   * FilterUtils (tag:key=value) will be created for all matches.</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment">   * @return a list of filters for instances that share common tags with</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment">   *   this instance.</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>    @SuppressWarnings(<span class="jxr_string">"OptionalUsedAsFieldOrParameterType"</span>)
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>    <strong class="jxr_keyword">public</strong> List&lt;Filter&gt; instanceTagNamesToFilters() {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      <strong class="jxr_keyword">return</strong> tagsUtils.getAwsTagNames().map(Stream::of).orElseGet(Stream::empty)
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>          .map(tagNames -&gt; <strong class="jxr_keyword">new</strong> Tuple&lt;&gt;(tagNames, tagsUtils.getInstanceTags()))
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>          .flatMap(namesAndTags -&gt; namesAndTags.getVal2()
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>              .stream()
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>              .filter(tag -&gt; namesAndTags.getVal1().contains(tag.getKey())))
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>          .map(tag -&gt; <strong class="jxr_keyword">new</strong> Filter(<span class="jxr_string">"tag:"</span> + tag.getKey(), Collections.singletonList(tag.getValue())))
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>          .collect(Collectors.toList());
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>    }
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <em class="jxr_javadoccomment">   * Parses a filter string into a list of Filter objects that is suitable for</em>
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <em class="jxr_javadoccomment">   * the AWS describeInstances method call.</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <em class="jxr_javadoccomment">   * &lt;h3&gt;Format:&lt;/h3&gt;</em>
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <em class="jxr_javadoccomment">   * &lt;blockquote&gt;</em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <em class="jxr_javadoccomment">   * &lt;pre&gt;</em>
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <em class="jxr_javadoccomment">   *   FILTERS ::= &amp;lt;FILTER&amp;gt; ( ';' &amp;lt;FILTER&amp;gt; )*</em>
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <em class="jxr_javadoccomment">   *   FILTER ::= &amp;lt;NAME&amp;gt; '=' &amp;lt;VALUE&amp;gt; (',' &amp;lt;VALUE&amp;gt;)*</em>
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <em class="jxr_javadoccomment">   * &lt;/pre&gt;</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <em class="jxr_javadoccomment">   * &lt;/blockquote&gt;</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <em class="jxr_javadoccomment">   * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment">   * @param filters the filter string to parse.</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <em class="jxr_javadoccomment">   * @return the list of filters that represent the filter string.</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> List&lt;Filter&gt; parseFilters(String filters) {
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      <strong class="jxr_keyword">return</strong> Arrays.stream(filters.split(<span class="jxr_string">"&#92;&#92;s*;&#92;&#92;s*"</span>))
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          .map(String::trim)
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          .filter(s -&gt; !s.isEmpty())
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>          .map(FilterUtils::splitToTuple)
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>          .map(keyAndValue -&gt; <strong class="jxr_keyword">new</strong> Filter(keyAndValue.getVal1(), splitValues(keyAndValue.getVal2())))
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>          .collect(Collectors.toList());
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    }
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Tuple&lt;String, String&gt; splitToTuple(String filter) {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <strong class="jxr_keyword">final</strong> String[] keyValues = filter.split(<span class="jxr_string">"&#92;&#92;s*=&#92;&#92;s*"</span>);
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      <strong class="jxr_keyword">if</strong> (keyValues.length != 2 || keyValues[0].length() == 0 || keyValues[1].length() == 0) {
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>        <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"Could not process key value pair '"</span> + filter + <span class="jxr_string">"'"</span>);
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      }
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> Tuple&lt;&gt;(keyValues[0].trim(), keyValues[1].trim());
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>    }
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> List&lt;String&gt; splitValues(String filterValues) {
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      <strong class="jxr_keyword">return</strong> Arrays.stream(filterValues.split(<span class="jxr_string">"&#92;&#92;s*,&#92;&#92;s*"</span>))
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>          .map(String::trim)
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>          .collect(Collectors.toList());
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>    }
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  }
+</pre>
+<hr/>
+<div id="footer">Copyright &#169; 2012&#x2013;2017 <a href="https://www.meltmedia.com">meltmedia</a>. All rights reserved.</div>
+</body>
+</html>

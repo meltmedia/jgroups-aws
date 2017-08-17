@@ -15,8 +15,9 @@ import java.util.List;
 
 
 /**
- * TODO: Upgrade the AWS SDK
+ * A factory for AmazonEC2 instances.
  */
+@SuppressWarnings("deprecation")
 public class EC2Factory {
   private static String EC2_ENDPOINT_TEMPLATE = "ec2.{REGION}.amazonaws.com";
 

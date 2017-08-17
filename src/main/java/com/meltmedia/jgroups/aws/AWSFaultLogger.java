@@ -20,6 +20,7 @@ import java.io.StringWriter;
  *
  * @author John McEntire
  */
+@SuppressWarnings("deprecation")
 class AWSFaultLogger implements Unmarshaller<AmazonServiceException, Node>, RequestHandler {
   private static Log log = LogFactory.getLog(AWS_PING.class);
   private final ThreadLocal<Request<?>> request = new ThreadLocal<>();

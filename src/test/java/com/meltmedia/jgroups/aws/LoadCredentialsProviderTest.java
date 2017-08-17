@@ -2,10 +2,6 @@ package com.meltmedia.jgroups.aws;
 
 import static org.junit.Assert.*;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -14,7 +10,6 @@ import org.jgroups.logging.Log;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.meltmedia.jgroups.aws.AWS_PING;
 
 import static org.mockito.Mockito.*;
 
@@ -75,8 +70,7 @@ public class LoadCredentialsProviderTest {
       verify(log).error(anyString());
     }
   }
-  
-  @SuppressWarnings("unchecked")
+
   @Test 
   public void noContextClassLoader() throws Exception {
     Log log = Mockito.mock(Log.class);

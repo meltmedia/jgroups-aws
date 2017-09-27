@@ -189,7 +189,7 @@ public class AWS_PING extends Discovery {
         log_aws_error_messages);
 
     this.ipAddressUtils = new IPAddressUtils(port_number, port_range);
-    this.tagUtils = new TagsUtils(ec2, instanceIdentity, tags);
+    this.tagUtils = new TagsUtils(ec2, instanceIdentity, tags).validateTags();
     this.filterUtils = new FilterUtils(filters, tagUtils);
 
     log.info("Configured for instance: " + instanceIdentity.instanceId);

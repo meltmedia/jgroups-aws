@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TagsUtils {
   private final AmazonEC2 ec2;
@@ -49,6 +50,28 @@ public class TagsUtils {
         .flatMap(instance -> instance.getTags().stream())
         .collect(Collectors.toList());
 
+  }
+
+  /**
+   * Configured tags will be validated against the instance tags.
+   * If one or more tags are missing on the instance, an exception will be thrown.
+   *
+   * @throws IllegalStateException
+   */
+  public TagsUtils validateTags() {
+    final List<String> instanceTags = getInstanceTags().stream()
+        .map(Tag::getKey)
+        .collect(Collectors.toList());
+
+    final List<String> missingTags = getAwsTagNames().map(List::stream).orElse(Stream.empty())
+        .filter(configuredTag -> !instanceTags.contains(configuredTag))
+        .collect(Collectors.toList());
+
+    if(!missingTags.isEmpty()) {
+      throw new IllegalStateException("expected instance tag(s) missing: " + missingTags.stream().collect(Collectors.joining(", ")));
+    }
+
+    return this;
   }
 
   /**

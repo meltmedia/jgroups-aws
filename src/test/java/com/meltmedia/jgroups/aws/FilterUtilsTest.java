@@ -61,7 +61,7 @@ public class FilterUtilsTest {
     final Tag instanceTag1 = new Tag("tag1", "value1");
     final Tag instanceTag2 = new Tag("tag2", "value2");
     final Tag instanceTag3 = new Tag("tag3", "value3");
-    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(instanceTag1, instanceTag2, instanceTag3), instanceIdentity, "tag2, tag3, tag4");
+    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(instanceTag1, instanceTag2, instanceTag3), instanceIdentity, "tag2, tag3");
     final FilterUtils filterUtils = new FilterUtils(null, tagsUtils);
 
     final List<Filter> filters = filterUtils.instanceTagNamesToFilters();

@@ -32,11 +32,14 @@ public class TagUtilsTest {
 
   @Test
   public void willParseConfiguredTags() {
-    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(), instanceIdentity, "configuredTag1, configuredTag2");
+    final Tag instanceTag1 = new Tag("tag1", "value1");
+    final Tag instanceTag2 = new Tag("tag2", "value2");
+
+    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(instanceTag1, instanceTag2), instanceIdentity, "tag1, tag2").validateTags();
     assertTrue(tagsUtils.getAwsTagNames().isPresent());
     tagsUtils.getAwsTagNames().ifPresent(tags -> {
       assertEquals(2, tags.size());
-      assertArrayEquals(new String[]{"configuredTag1", "configuredTag2"}, tags.toArray());
+      assertArrayEquals(new String[]{"tag1", "tag2"}, tags.toArray());
     });
   }
 
@@ -45,7 +48,7 @@ public class TagUtilsTest {
     final Tag instanceTag1 = new Tag("instanceTag1", "value1");
     final Tag instanceTag2 = new Tag("instanceTag2", "value2");
 
-    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(instanceTag1, instanceTag2), instanceIdentity, null);
+    final TagsUtils tagsUtils = new TagsUtils(ec2Mock(instanceTag1, instanceTag2), instanceIdentity, null).validateTags();
     final List<Tag> tags = tagsUtils.getInstanceTags();
 
     assertEquals(2, tags.size());
@@ -56,5 +59,13 @@ public class TagUtilsTest {
     assertEquals("value1", tag1.getValue());
     assertEquals("instanceTag2", tag2.getKey());
     assertEquals("value2", tag2.getValue());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void missingInstanceTagsShouldThrowException() {
+    final Tag instanceTag1 = new Tag("tag1", "value1");
+    final Tag instanceTag2 = new Tag("tag2", "value2");
+
+    new TagsUtils(ec2Mock(instanceTag1, instanceTag2), instanceIdentity, "tag1, tag2, tag3").validateTags();
   }
 }

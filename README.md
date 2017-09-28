@@ -14,7 +14,7 @@ To use AWS auto discovery, you need to add a dependency to this package in your 
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-      <version>1.6.0</version>
+      <version>1.6.1</version>
     </dependency>
 ```
 

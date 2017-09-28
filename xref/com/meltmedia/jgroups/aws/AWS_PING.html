@@ -197,7 +197,7 @@
 <a class="jxr_linenumber" name="L189" href="#L189">189</a>         log_aws_error_messages);
 <a class="jxr_linenumber" name="L190" href="#L190">190</a> 
 <a class="jxr_linenumber" name="L191" href="#L191">191</a>     <strong class="jxr_keyword">this</strong>.ipAddressUtils = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/jgroups/aws/IPAddressUtils.html">IPAddressUtils</a>(port_number, port_range);
-<a class="jxr_linenumber" name="L192" href="#L192">192</a>     <strong class="jxr_keyword">this</strong>.tagUtils = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/jgroups/aws/TagsUtils.html">TagsUtils</a>(ec2, instanceIdentity, tags);
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     <strong class="jxr_keyword">this</strong>.tagUtils = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/jgroups/aws/TagsUtils.html">TagsUtils</a>(ec2, instanceIdentity, tags).validateTags();
 <a class="jxr_linenumber" name="L193" href="#L193">193</a>     <strong class="jxr_keyword">this</strong>.filterUtils = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/jgroups/aws/FilterUtils.html">FilterUtils</a>(filters, tagUtils);
 <a class="jxr_linenumber" name="L194" href="#L194">194</a> 
 <a class="jxr_linenumber" name="L195" href="#L195">195</a>     log.info(<span class="jxr_string">"Configured for instance: "</span> + instanceIdentity.instanceId);

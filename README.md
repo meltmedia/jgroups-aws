@@ -2,8 +2,8 @@ AWS Auto Discovery for JGroups
 ==============================
 Overview
 --------
-This package provides auto discovery for other custer members on AWS using both tag matching and filters.  It is
-a drop in replacement for TCPPING, allowing you to remove the definition of your initial members from your configuraiton
+This package provides auto discovery for other cluster members on AWS using both tag matching and filters.  It is
+a drop in replacement for TCPPING, allowing you to remove the definition of your initial members from your configuration
 file.
 
 Usage

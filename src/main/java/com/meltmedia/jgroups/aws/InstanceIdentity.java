@@ -16,7 +16,10 @@ import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InstanceIdentity {
-  private static String INSTANCE_IDENTITY_URL = "http://instance-data/latest/dynamic/instance-identity/document";
+
+  private static final String INSTANCE_DATA  = System.getProperty("instance.data", "169.254.169.254");
+  private static final String INSTANCE_IDENTITY_URL = String.format("http://%s/latest/dynamic/instance-identity/document", INSTANCE_DATA);
+
   private static URI INSTANCE_IDENTITY_URI;
 
   static {

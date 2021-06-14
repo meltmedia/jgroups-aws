@@ -49,7 +49,7 @@
     <dependency>
       <groupId>org.jgroups</groupId>
       <artifactId>jgroups</artifactId>
-      <version>4.0.5.Final</version>
+      <version>4.2.15.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>bsh</artifactId>

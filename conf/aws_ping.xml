@@ -17,7 +17,7 @@
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.0.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
     <TCP bind_port="7800"
          recv_buf_size="${tcp.recv_buf_size:20M}"
          send_buf_size="${tcp.send_buf_size:640K}"

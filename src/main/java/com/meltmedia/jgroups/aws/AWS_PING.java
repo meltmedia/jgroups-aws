@@ -236,7 +236,7 @@ public class AWS_PING extends Discovery {
 
     clusterMembers.stream()
         .filter(Objects::nonNull) //guard against nulls
-        .filter(address -> !address.getIpAddress().equals(physical_addr.getIpAddress())) //filter out self
+        .filter(address -> address.compareTo(physical_addr) != 0) //filter out self
         .map(address -> new Message(address)
             .setFlag(Message.Flag.INTERNAL, Message.Flag.DONT_BUNDLE, Message.Flag.OOB)
             .putHeader(this.id, hdr).setBuffer(marshal(data)))

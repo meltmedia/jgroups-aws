@@ -15,10 +15,13 @@
  */
 package com.meltmedia.jgroups.aws;
 
+import com.amazonaws.regions.RegionUtils;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.util.EC2MetadataUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jgroups.Address;
@@ -174,27 +177,32 @@ public class AWS_PING extends Discovery {
   public void init() throws Exception {
     super.init();
 
-    //get the instance identity
-    try (CloseableHttpClient client = HttpClients.createDefault()) {
-      this.instanceIdentity = InstanceIdentity.getIdentity(client);
+    if(Regions.getCurrentRegion() != null) {
+      //get the instance identity
+      try (CloseableHttpClient client = HttpClients.createDefault()) {
+        this.instanceIdentity = InstanceIdentity.getIdentity(client);
+      }
+
+      //setup ec2 client
+      this.ec2 = EC2Factory.create(
+              instanceIdentity,
+              access_key,
+              secret_key,
+              credentials_provider_class,
+              new CredentialsProviderFactory(),
+              log_aws_error_messages);
+
+      this.ipAddressUtils = new IPAddressUtils(port_number, port_range);
+      this.tagUtils = new TagsUtils(ec2, instanceIdentity, tags).validateTags();
+      this.filterUtils = new FilterUtils(filters, tagUtils);
+
+      log.info("Configured for instance: " + instanceIdentity.instanceId);
+      filterUtils.getAwsFilters().ifPresent(f -> log.info("Configured with filters [%s]", f));
+      tagUtils.getAwsTagNames().ifPresent(t -> log.info("Configured with tags [%s]", t));
     }
-
-    //setup ec2 client
-    this.ec2 = EC2Factory.create(
-        instanceIdentity,
-        access_key,
-        secret_key,
-        credentials_provider_class,
-        new CredentialsProviderFactory(),
-        log_aws_error_messages);
-
-    this.ipAddressUtils = new IPAddressUtils(port_number, port_range);
-    this.tagUtils = new TagsUtils(ec2, instanceIdentity, tags).validateTags();
-    this.filterUtils = new FilterUtils(filters, tagUtils);
-
-    log.info("Configured for instance: " + instanceIdentity.instanceId);
-    filterUtils.getAwsFilters().ifPresent(f -> log.info("Configured with filters [%s]", f));
-    tagUtils.getAwsTagNames().ifPresent(t -> log.info("Configured with tags [%s]", t));
+    else {
+      log.debug("Could not determine AWS Region. Assuming instance is not running in AWS...");
+    }
   }
 
   /**

@@ -64,7 +64,7 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-ec2</artifactId>
-      <version>1.11.125</version>
+      <version>1.11.1034</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

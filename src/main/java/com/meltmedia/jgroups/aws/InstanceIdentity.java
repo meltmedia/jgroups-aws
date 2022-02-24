@@ -1,13 +1,9 @@
 package com.meltmedia.jgroups.aws;
 
+import com.amazonaws.internal.EC2ResourceFetcher;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -56,26 +52,20 @@ public class InstanceIdentity {
     this.region = Objects.requireNonNull(region, "region cannot be null");
   }
 
-  public static InstanceIdentity getIdentity(final HttpClient client) throws IOException {
-    return new ObjectMapper().readValue(getIdentityDocument(client), InstanceIdentity.class);
+  public static InstanceIdentity getIdentity(EC2ResourceFetcher ec2ResourceFetcher) throws IOException {
+    return new ObjectMapper().readValue(getIdentityDocument(ec2ResourceFetcher), InstanceIdentity.class);
   }
 
   /**
    * Gets the body of the content returned from a GET request to uri.
    *
-   * @param client
    * @return the body of the message returned from the GET request.
    * @throws IOException if there is an error encountered while getting the content.
+   * @param ec2ResourceFetcher
    */
-  private static String getIdentityDocument(final HttpClient client) throws IOException {
+  private static String getIdentityDocument(EC2ResourceFetcher ec2ResourceFetcher) throws IOException {
     try {
-      final HttpGet getInstance = new HttpGet();
-      getInstance.setURI(INSTANCE_IDENTITY_URI);
-      final HttpResponse response = client.execute(getInstance);
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        throw new IOException("failed to get instance identity, tried: " + INSTANCE_IDENTITY_URL + ", response: " + response.getStatusLine().getReasonPhrase());
-      }
-      return EntityUtils.toString(response.getEntity());
+      return ec2ResourceFetcher.readResource(INSTANCE_IDENTITY_URI);
     } catch (Exception e) {
       throw new IOException("failed to get instance identity", e);
     }

@@ -15,12 +15,12 @@
  */
 package com.meltmedia.jgroups.aws;
 
+import com.amazonaws.internal.EC2ResourceFetcher;
+import com.amazonaws.internal.InstanceMetadataServiceResourceFetcher;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.Message;
@@ -175,9 +175,8 @@ public class AWS_PING extends Discovery {
     super.init();
 
     //get the instance identity
-    try (CloseableHttpClient client = HttpClients.createDefault()) {
-      this.instanceIdentity = InstanceIdentity.getIdentity(client);
-    }
+    EC2ResourceFetcher ec2ResourceFetcher = InstanceMetadataServiceResourceFetcher.getInstance();
+    this.instanceIdentity = InstanceIdentity.getIdentity(ec2ResourceFetcher);
 
     //setup ec2 client
     this.ec2 = EC2Factory.create(

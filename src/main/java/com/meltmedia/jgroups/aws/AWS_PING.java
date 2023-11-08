@@ -15,12 +15,6 @@
  */
 package com.meltmedia.jgroups.aws;
 
-import com.amazonaws.internal.EC2ResourceFetcher;
-import com.amazonaws.internal.InstanceMetadataServiceResourceFetcher;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Instance;
 import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.Message;
@@ -32,6 +26,12 @@ import org.jgroups.protocols.PingHeader;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.util.NameCache;
 import org.jgroups.util.Responses;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.Filter;
+import software.amazon.awssdk.services.ec2.model.Instance;
 
 import java.util.List;
 import java.util.Objects;
@@ -124,7 +124,7 @@ public class AWS_PING extends Discovery {
   }
 
   @Property(description = "The AWS Credentials Chain Class to use when searching for the account.")
-  protected String credentials_provider_class = com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName();
+  protected String credentials_provider_class = DefaultCredentialsProvider.class.getName();
   @Property(description = "The AWS Access Key for the account to search.")
   protected String access_key;
   @Property(description = "The AWS Secret Key for the account to search.")
@@ -145,12 +145,12 @@ public class AWS_PING extends Discovery {
   /**
    * This is looked up using the endpoint http://instance-data/latest/dynamic/instance-identity/document
    */
-  private InstanceIdentity instanceIdentity;
+  private EC2MetadataUtils.InstanceInfo instanceInfo;
 
   /**
    * The Service for all AWS related stuff
    */
-  private AmazonEC2 ec2;
+  private Ec2Client ec2;
 
   /**
    * Utility for expanding one ip address + port and range to multiple address:port
@@ -175,23 +175,21 @@ public class AWS_PING extends Discovery {
     super.init();
 
     //get the instance identity
-    EC2ResourceFetcher ec2ResourceFetcher = InstanceMetadataServiceResourceFetcher.getInstance();
-    this.instanceIdentity = InstanceIdentity.getIdentity(ec2ResourceFetcher);
+    this.instanceInfo = EC2MetadataUtils.getInstanceInfo();
 
     //setup ec2 client
     this.ec2 = EC2Factory.create(
-        instanceIdentity,
+        instanceInfo,
         access_key,
         secret_key,
         credentials_provider_class,
-        new CredentialsProviderFactory(),
-        log_aws_error_messages);
+        new CredentialsProviderFactory());
 
     this.ipAddressUtils = new IPAddressUtils(port_number, port_range);
-    this.tagUtils = new TagsUtils(ec2, instanceIdentity, tags).validateTags();
+    this.tagUtils = new TagsUtils(ec2, instanceInfo, tags).validateTags();
     this.filterUtils = new FilterUtils(filters, tagUtils);
 
-    log.info("Configured for instance: " + instanceIdentity.instanceId);
+    log.info("Configured for instance: " + instanceInfo.getInstanceId());
     filterUtils.getAwsFilters().ifPresent(f -> log.info("Configured with filters [%s]", f));
     tagUtils.getAwsTagNames().ifPresent(t -> log.info("Configured with tags [%s]", t));
   }
@@ -203,7 +201,7 @@ public class AWS_PING extends Discovery {
   public void stop() {
     try {
       if (ec2 != null) {
-        ec2.shutdown();
+        ec2.close();
       }
     } finally {
       super.stop();
@@ -263,7 +261,7 @@ public class AWS_PING extends Discovery {
     // if there are aws filters defined, add them to the list.
     filterUtils.getAwsFilters().ifPresent(filters::addAll);
 
-    final DescribeInstancesRequest request = new DescribeInstancesRequest().withFilters(filters);
+    final DescribeInstancesRequest request = DescribeInstancesRequest.builder().filters(filters).build();
 
     if (log.isDebugEnabled()) {
       log.debug("Describing AWS instances with the following filters [%s]", filters);
@@ -272,9 +270,9 @@ public class AWS_PING extends Discovery {
 
     // NOTE: the reservations group nodes together by when they were started. We
     // need to dig through all of the reservations.
-    final List<String> result = ec2.describeInstances(request).getReservations().stream()
-        .flatMap(reservation -> reservation.getInstances().stream())
-        .map(Instance::getPrivateIpAddress)
+    final List<String> result = ec2.describeInstancesPaginator(request).reservations().stream()
+        .flatMap(reservation -> reservation.instances().stream())
+        .map(Instance::privateIpAddress)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 

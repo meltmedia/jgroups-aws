@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 import static com.google.common.io.Resources.getResource;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +17,7 @@ public class InstanceIdentityTest {
   public void fromResponse() throws Exception {
     EC2ResourceFetcher ec2ResourceFetcher = mock(EC2ResourceFetcher.class);
 
-    when(ec2ResourceFetcher.readResource(any(), any(), any()))
+    when(ec2ResourceFetcher.readResource(any()))
             .thenReturn(Resources.toString(getResource("instance-identity.json"), StandardCharsets.UTF_8));
 
     InstanceIdentity instanceIdentity = InstanceIdentity.getIdentity(ec2ResourceFetcher);

@@ -21,9 +21,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.jgroups.Address;
-import org.jgroups.Event;
-import org.jgroups.Message;
+import org.jgroups.*;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.Discovery;
@@ -237,9 +235,9 @@ public class AWS_PING extends Discovery {
     clusterMembers.stream()
         .filter(Objects::nonNull) //guard against nulls
         .filter(address -> address.compareTo(physical_addr) != 0) //filter out self
-        .map(address -> new Message(address)
-            .setFlag(Message.Flag.INTERNAL, Message.Flag.DONT_BUNDLE, Message.Flag.OOB)
-            .putHeader(this.id, hdr).setBuffer(marshal(data)))
+        .map(address -> new BytesMessage(address)
+            .setFlag(Message.Flag.DONT_BUNDLE, Message.Flag.OOB)
+            .putHeader(this.id, hdr).setArray(marshal(data)))
         .forEach(message -> {
           if(async_discovery_use_separate_thread_per_request) {
             log.trace("%s: sending async discovery request to %s", local_addr, message.getDest());

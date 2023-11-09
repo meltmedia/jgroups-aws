@@ -1,16 +1,19 @@
 package com.meltmedia.jgroups.aws;
 
-import static org.junit.Assert.*;
-
+import org.jgroups.logging.Log;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.jgroups.logging.Log;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.identity.spi.AwsCredentialsIdentity;
+import software.amazon.awssdk.identity.spi.ResolveIdentityRequest;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
+import java.util.concurrent.CompletableFuture;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 /**
@@ -75,7 +78,7 @@ public class LoadCredentialsProviderTest {
   public void noContextClassLoader() throws Exception {
     Log log = Mockito.mock(Log.class);
     
-    doCall(null, com.amazonaws.auth.DefaultAWSCredentialsProviderChain.class.getName(), log);
+    doCall(null, DefaultCredentialsProvider.class.getName(), log);
   }
   
   public static Answer<Object> answerWith(final Object o) {
@@ -90,35 +93,35 @@ public class LoadCredentialsProviderTest {
   /**
    * A credentials provider with no real implementation.
    */
-  public static class UnsupportedAWSCredentialProvider implements AWSCredentialsProvider {
+  public static class UnsupportedAWSCredentialProvider implements AwsCredentialsProvider {
     @Override
-    public AWSCredentials getCredentials() {
+    public AwsCredentials resolveCredentials() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void refresh() {
-      throw new UnsupportedOperationException();
-    }  
+    public Class<AwsCredentialsIdentity> identityType() {
+      return AwsCredentialsProvider.super.identityType();
+    }
+
+    @Override
+    public CompletableFuture<AwsCredentialsIdentity> resolveIdentity(ResolveIdentityRequest request) {
+      return AwsCredentialsProvider.super.resolveIdentity(request);
+    }
+
+    public static UnsupportedAWSCredentialProvider create() {
+      return new UnsupportedAWSCredentialProvider();
+    }
   }
   
   /**
    * A credentials provider that does not supply the needed constructor.
    */
-  public static class BadConstructorAWSCredentialsProvider implements AWSCredentialsProvider {
-    public BadConstructorAWSCredentialsProvider( String tooManyArgs) {}
-    @Override
-    public AWSCredentials getCredentials() {
-      throw new UnsupportedOperationException();
-    }
+  public static class BadConstructorAWSCredentialsProvider extends UnsupportedAWSCredentialProvider {
 
-    @Override
-    public void refresh() {
-      throw new UnsupportedOperationException();
-    }  
   }
   
-  public static AWSCredentialsProvider doCall( ClassLoader contextClassLoader, String className, Log log) throws Exception
+  public static AwsCredentialsProvider doCall( ClassLoader contextClassLoader, String className, Log log) throws Exception
   {
     ClassLoader oldCtx = Thread.currentThread().getContextClassLoader();
     try {

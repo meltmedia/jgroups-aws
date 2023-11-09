@@ -1,9 +1,9 @@
 package com.meltmedia.jgroups.aws;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
 import org.jgroups.logging.Log;
 import org.jgroups.logging.LogFactory;
 import org.jgroups.util.Util;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 public class CredentialsProviderFactory {
   private final Log log;
@@ -24,16 +24,14 @@ public class CredentialsProviderFactory {
    * @throws ClassNotFoundException if the implementation could not be found.
    * @throws InstantiationException if the implementation does not have a no argument constructor.
    */
-  public AWSCredentialsProvider createCredentialsProvider(final String credentialProviderClass) throws Exception {
+  public AwsCredentialsProvider createCredentialsProvider(final String credentialProviderClass) throws Exception {
     try {
       final Class<?> credsProviderClazz = Util.loadClass(credentialProviderClass, getClass());
-      return (AWSCredentialsProvider) credsProviderClazz.newInstance();
+      return (AwsCredentialsProvider) credsProviderClazz.getMethod("create").invoke(null);
+    } catch (NoSuchMethodException e) {
+      throw new Exception("unable to find create method on credentials provider class " + credentialProviderClass);
     } catch (ClassNotFoundException e) {
       throw new Exception("unable to load credentials provider class " + credentialProviderClass);
-    } catch (InstantiationException e) {
-      log.error("an instance of " + credentialProviderClass + " could not be created. Please check that it implements" +
-          " interface AWSCredentialsProvider and that is has a public empty constructor !");
-      throw e;
     }
   }
 }

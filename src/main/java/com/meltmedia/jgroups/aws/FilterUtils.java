@@ -1,14 +1,13 @@
 package com.meltmedia.jgroups.aws;
 
-import com.amazonaws.services.ec2.model.Filter;
 import org.jgroups.util.Tuple;
+import software.amazon.awssdk.services.ec2.model.Filter;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FilterUtils {
   private final TagsUtils tagsUtils;
@@ -40,13 +39,12 @@ public class FilterUtils {
    */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public List<Filter> instanceTagNamesToFilters() {
-    return tagsUtils.getAwsTagNames().map(Stream::of).orElseGet(Stream::empty)
-        .map(tagNames -> new Tuple<>(tagNames, tagsUtils.getInstanceTags()))
-        .flatMap(namesAndTags -> namesAndTags.getVal2()
-            .stream()
-            .filter(tag -> namesAndTags.getVal1().contains(tag.getKey())))
-        .map(tag -> new Filter("tag:" + tag.getKey(), Collections.singletonList(tag.getValue())))
-        .collect(Collectors.toList());
+    return tagsUtils.getAwsTagNames().map(tagNames ->
+            tagsUtils.getInstanceTags().stream()
+            .filter(tag -> tagNames.contains(tag.key()))
+            .map(tag -> Filter.builder().name("tag:" + tag.key()).values(tag.value()).build())
+            .collect(Collectors.toList())
+    ).orElseGet(Collections::emptyList);
   }
 
   /**
@@ -73,7 +71,11 @@ public class FilterUtils {
         .map(String::trim)
         .filter(s -> !s.isEmpty())
         .map(FilterUtils::splitToTuple)
-        .map(keyAndValue -> new Filter(keyAndValue.getVal1(), splitValues(keyAndValue.getVal2())))
+        .map(keyAndValue -> Filter.builder()
+                .name(keyAndValue.getVal1())
+                .values(splitValues(keyAndValue.getVal2()))
+                .build()
+        )
         .collect(Collectors.toList());
   }
 

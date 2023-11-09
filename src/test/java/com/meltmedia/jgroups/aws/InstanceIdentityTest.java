@@ -1,37 +1,26 @@
 package com.meltmedia.jgroups.aws;
 
+import com.amazonaws.internal.EC2ResourceFetcher;
 import com.google.common.io.Resources;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 import static com.google.common.io.Resources.getResource;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class InstanceIdentityTest {
   @Test
   public void fromResponse() throws Exception {
-    final HttpClient client = mock(HttpClient.class);
-    final HttpResponse response = mock(HttpResponse.class);
-    final StatusLine statusLine = mock(StatusLine.class);
-    final HttpEntity responseEntity = mock(HttpEntity.class);
+    EC2ResourceFetcher ec2ResourceFetcher = mock(EC2ResourceFetcher.class);
 
-    when(responseEntity.getContent()).thenReturn(new ByteArrayInputStream(Resources.toByteArray(getResource("instance-identity.json"))));
-    when(responseEntity.getContentLength()).thenReturn(-1L);
-    when(statusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    when(response.getStatusLine()).thenReturn(statusLine);
-    when(response.getEntity()).thenReturn(responseEntity);
-    when(client.execute(any())).thenReturn(response);
+    when(ec2ResourceFetcher.readResource(any()))
+            .thenReturn(Resources.toString(getResource("instance-identity.json"), StandardCharsets.UTF_8));
 
-    InstanceIdentity instanceIdentity = InstanceIdentity.getIdentity(client);
+    InstanceIdentity instanceIdentity = InstanceIdentity.getIdentity(ec2ResourceFetcher);
 
     assertEquals("us-west-2b", instanceIdentity.availabilityZone);
     assertEquals("10.158.112.84", instanceIdentity.privateIp);
